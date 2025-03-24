@@ -4,6 +4,7 @@ using System.Drawing.Printing;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using ParkIRC.Models;
+using ParkIRC.Extensions;
 
 namespace ParkIRC.Services
 {
@@ -38,7 +39,7 @@ namespace ParkIRC.Services
             else
             {
                 _defaultPrinter = string.Empty;
-                _logger.LogWarning("Printing is only supported on Windows");
+                _logger.LogWarning("Printing is only supported on Windows. Using mock implementation for Linux.");
             }
         }
 
@@ -46,8 +47,16 @@ namespace ParkIRC.Services
         {
             if (!OperatingSystem.IsWindows())
             {
-                _logger.LogWarning("Printing is only supported on Windows");
-                return false;
+                // Linux mock implementation - just log the ticket info
+                _logger.LogInformation("=== MOCK TICKET PRINTING (LINUX) ===");
+                _logger.LogInformation($"Ticket Number: {ticket.TicketNumber}");
+                _logger.LogInformation($"Date/Time: {ticket.IssueTime:dd/MM/yyyy HH:mm}");
+                _logger.LogInformation($"Vehicle: {ticket.VehicleNumber}");
+                _logger.LogInformation($"Vehicle Type: {ticket.VehicleType}");
+                _logger.LogInformation($"Parking Space: {ticket.ParkingSpaceNumber}");
+                _logger.LogInformation($"Entry Time: {ticket.EntryTime:dd/MM/yyyy HH:mm}");
+                _logger.LogInformation("=== END MOCK TICKET PRINTING ===");
+                return true; // Return success for Linux
             }
 
             try
@@ -69,7 +78,7 @@ namespace ParkIRC.Services
                         yPos += 20;
                         e.Graphics.DrawString($"Tanggal: {ticket.IssueTime:dd/MM/yyyy HH:mm}", font, Brushes.Black, 10, yPos);
                         yPos += 20;
-                        e.Graphics.DrawString($"Kendaraan: {ticket.Vehicle?.VehicleNumber ?? "-"}", font, Brushes.Black, 10, yPos);
+                        e.Graphics.DrawString($"Kendaraan: {ticket.VehicleNumber}", font, Brushes.Black, 10, yPos);
                         yPos += 20;
 
                         // Print QR Code if available
@@ -103,8 +112,21 @@ namespace ParkIRC.Services
         {
             if (!OperatingSystem.IsWindows())
             {
-                _logger.LogWarning("Printing is only supported on Windows");
-                return false;
+                // Linux mock implementation - just log the receipt info
+                _logger.LogInformation("=== MOCK RECEIPT PRINTING (LINUX) ===");
+                _logger.LogInformation($"Transaction Number: {transaction.TransactionNumber}");
+                _logger.LogInformation($"Vehicle: {transaction.Vehicle?.VehicleNumber ?? "-"}");
+                _logger.LogInformation($"Entry: {transaction.EntryTime:dd/MM/yyyy HH:mm}");
+                _logger.LogInformation($"Exit: {transaction.ExitTime:dd/MM/yyyy HH:mm}");
+                
+                // Check if ExitTime is not the default value
+                if (transaction.ExitTime != default)
+                {
+                    _logger.LogInformation($"Duration: {(transaction.ExitTime - transaction.EntryTime):hh\\:mm}");
+                }
+                _logger.LogInformation($"Total: {transaction.TotalAmount.ToRupiah()}");
+                _logger.LogInformation("=== END MOCK RECEIPT PRINTING ===");
+                return true; // Return success for Linux
             }
 
             try
@@ -130,9 +152,14 @@ namespace ParkIRC.Services
                         yPos += 20;
                         e.Graphics.DrawString($"Keluar: {transaction.ExitTime:dd/MM/yyyy HH:mm}", font, Brushes.Black, 10, yPos);
                         yPos += 20;
-                        e.Graphics.DrawString($"Durasi: {(transaction.ExitTime - transaction.EntryTime):hh\\:mm}", font, Brushes.Black, 10, yPos);
-                        yPos += 20;
-                        e.Graphics.DrawString($"Total: Rp {transaction.TotalAmount:N0}", new Font("Arial", 10, FontStyle.Bold), Brushes.Black, 10, yPos);
+                        
+                        // Check if ExitTime is not the default value
+                        if (transaction.ExitTime != default)
+                        {
+                            e.Graphics.DrawString($"Durasi: {(transaction.ExitTime - transaction.EntryTime):hh\\:mm}", font, Brushes.Black, 10, yPos);
+                            yPos += 20;
+                        }
+                        e.Graphics.DrawString($"Total: {transaction.TotalAmount.ToRupiah()}", new Font("Arial", 10, FontStyle.Bold), Brushes.Black, 10, yPos);
                     };
 
                     pd.Print();
@@ -151,8 +178,9 @@ namespace ParkIRC.Services
         {
             if (!OperatingSystem.IsWindows())
             {
-                _logger.LogWarning("Printing is only supported on Windows");
-                return false;
+                // Linux mock implementation - always return true
+                _logger.LogInformation("Mock printer check on Linux - always returns true");
+                return true;
             }
 
             try
@@ -179,8 +207,8 @@ namespace ParkIRC.Services
         {
             if (!OperatingSystem.IsWindows())
             {
-                _logger.LogWarning("Printing is only supported on Windows");
-                return string.Empty;
+                // Linux mock implementation - return mock printer name
+                return "LINUX_MOCK_PRINTER";
             }
 
             try
@@ -203,8 +231,8 @@ namespace ParkIRC.Services
         {
             if (!OperatingSystem.IsWindows())
             {
-                _logger.LogWarning("Printing is only supported on Windows");
-                return new List<string>();
+                // Linux mock implementation - return mock printer list
+                return new List<string> { "LINUX_MOCK_PRINTER" };
             }
 
             try

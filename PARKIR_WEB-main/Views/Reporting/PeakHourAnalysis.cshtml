@@ -1,4 +1,5 @@
 @model dynamic
+@using ParkIRC.Extensions
 
 <div class="container-fluid">
     <div class="row">
@@ -24,7 +25,7 @@
                             <div class="card bg-success text-white">
                                 <div class="card-body">
                                     <h6 class="card-title">Total Revenue</h6>
-                                    <h3 class="mb-0">@Model.TotalRevenue.ToString("C2")</h3>
+                                    <h3 class="mb-0">@(((decimal)Model.TotalRevenue).ToRupiah())</h3>
                                 </div>
                             </div>
                         </div>
@@ -62,8 +63,8 @@
                                             <tr>
                                                 <td>@hour.Hour</td>
                                                 <td>@hour.Count</td>
-                                                <td>@hour.Revenue.ToString("C2")</td>
-                                                <td>@hour.AverageRevenue.ToString("C2")</td>
+                                                <td>@(((decimal)hour.Revenue).ToRupiah())</td>
+                                                <td>@(((decimal)hour.AverageRevenue).ToRupiah())</td>
                                             </tr>
                                         }
                                     </tbody>
@@ -79,6 +80,7 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/js/currency-utils.js"></script>
     <script>
         const hourlyData = @Html.Raw(Json.Serialize(Model.HourlyData));
         const ctx = document.getElementById('peakHourChart').getContext('2d');
@@ -148,10 +150,7 @@
                                     label += ': ';
                                 }
                                 if (context.dataset.label === 'Revenue') {
-                                    label += new Intl.NumberFormat('id-ID', { 
-                                        style: 'currency', 
-                                        currency: 'IDR' 
-                                    }).format(context.raw);
+                                    label += formatRupiah(context.raw);
                                 } else {
                                     label += context.raw;
                                 }

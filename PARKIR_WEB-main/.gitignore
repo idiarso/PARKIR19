@@ -546,3 +546,12 @@ appsettings.Development.json
 *.pidb
 *.svclog
 *.scc
+
+# Dependensi lokal
+!/wwwroot/lib/
+/wwwroot/lib/*
+!/wwwroot/lib/bootstrap/css/bootstrap.min.css
+!/wwwroot/lib/jquery/jquery.min.js
+!/wwwroot/lib/fontawesome/css/all.min.css
+!/wwwroot/lib/fontawesome/webfonts/
+!/wwwroot/lib/sweetalert2/sweetalert2.min.css

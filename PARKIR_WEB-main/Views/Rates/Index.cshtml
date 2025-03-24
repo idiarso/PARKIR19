@@ -1,4 +1,5 @@
 @model IEnumerable<ParkIRC.Models.ParkingRateConfiguration>
+@using ParkIRC.Extensions
 
 @{
     ViewData["Title"] = "Tarif Parkir";
@@ -33,11 +34,11 @@
                         {
                             <tr>
                                 <td>@item.VehicleType</td>
-                                <td>Rp @item.BaseRate.ToString("N0")</td>
-                                <td>Rp @item.HourlyRate.ToString("N0")</td>
-                                <td>Rp @item.DailyRate.ToString("N0")</td>
-                                <td>Rp @item.WeeklyRate.ToString("N0")</td>
-                                <td>Rp @item.MonthlyRate.ToString("N0")</td>
+                                <td>@item.BaseRate.ToRupiah()</td>
+                                <td>@item.HourlyRate.ToRupiah()</td>
+                                <td>@item.DailyRate.ToRupiah()</td>
+                                <td>@item.WeeklyRate.ToRupiah()</td>
+                                <td>@item.MonthlyRate.ToRupiah()</td>
                                 <td>
                                     @if (item.IsActive)
                                     {

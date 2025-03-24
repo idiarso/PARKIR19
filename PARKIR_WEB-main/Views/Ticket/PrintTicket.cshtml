@@ -1,0 +1,90 @@
+@{
+    ViewData["Title"] = "Print Ticket";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Print Parking Ticket</h3>
+        </div>
+        <div class="card-body">
+            <form id="printTicketForm">
+                <div class="form-group">
+                    <label for="vehicleNumber">Enter Vehicle Number</label>
+                    <input type="text" class="form-control form-control-lg" id="vehicleNumber" name="vehicleNumber" placeholder="e.g., AB1234CD" required>
+                </div>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Print Ticket</button>
+                    <a href="@Url.Action("QuickAccess", "Parking")" class="btn btn-outline-secondary">Back to Dashboard</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="alert alert-info mt-4">
+        <h5>Instructions:</h5>
+        <p>1. Enter the vehicle's license plate number</p>
+        <p>2. Click "Print Ticket" to print the parking ticket</p>
+        <p>3. Make sure the printer is connected and ready</p>
+    </div>
+    
+    <!-- Result message will appear here -->
+    <div id="result" class="mt-3" style="display: none;"></div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function() {
+            $('#printTicketForm').submit(function(e) {
+                e.preventDefault();
+                
+                var vehicleNumber = $('#vehicleNumber').val();
+                if (!vehicleNumber) {
+                    showMessage('error', 'Please enter a vehicle number');
+                    return;
+                }
+                
+                // Get the anti-forgery token
+                var token = $('input[name="__RequestVerificationToken"]').val();
+                
+                // Show loading indicator
+                showMessage('info', 'Processing your request...');
+                
+                // Send the request to print the ticket
+                $.ajax({
+                    url: '@Url.Action("PrintTicket", "Ticket")',
+                    type: 'POST',
+                    data: { 
+                        vehicleNumber: vehicleNumber,
+                        __RequestVerificationToken: token
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            showMessage('success', response.message);
+                        } else {
+                            showMessage('error', response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        showMessage('error', 'An error occurred: ' + xhr.responseText);
+                    }
+                });
+            });
+            
+            function showMessage(type, message) {
+                var resultDiv = $('#result');
+                resultDiv.removeClass('alert-success alert-danger alert-info');
+                
+                if (type === 'success') {
+                    resultDiv.addClass('alert alert-success');
+                } else if (type === 'error') {
+                    resultDiv.addClass('alert alert-danger');
+                } else {
+                    resultDiv.addClass('alert alert-info');
+                }
+                
+                resultDiv.html(message).show();
+            }
+        });
+    </script>
+} 

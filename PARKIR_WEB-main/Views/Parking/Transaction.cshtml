@@ -124,6 +124,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/currency-utils.js"></script>
     <script>
         let stream;
         const video = document.getElementById('camera');
@@ -174,10 +175,7 @@
                 if (data.vehicle) {
                     document.getElementById('entryTime').value = new Date(data.vehicle.entryTime).toLocaleString();
                     document.getElementById('exitTime').value = new Date().toLocaleString();
-                    document.getElementById('rate').value = new Intl.NumberFormat('id-ID', { 
-                        style: 'currency', 
-                        currency: 'IDR' 
-                    }).format(data.rate);
+                    document.getElementById('rate').value = formatRupiah(data.rate);
                     
                     // Calculate duration
                     const entryTime = new Date(data.vehicle.entryTime);
@@ -187,10 +185,7 @@
                     
                     // Calculate total amount
                     const totalAmount = duration * data.rate;
-                    document.getElementById('totalAmount').value = new Intl.NumberFormat('id-ID', { 
-                        style: 'currency', 
-                        currency: 'IDR' 
-                    }).format(totalAmount);
+                    document.getElementById('totalAmount').value = formatRupiah(totalAmount);
                 } else {
                     alert('Kendaraan tidak ditemukan atau sudah keluar');
                 }

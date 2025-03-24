@@ -55,6 +55,9 @@ try
     builder.Services.AddScoped<IEmailService, EmailService>();
     builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
     builder.Services.AddScoped<IScannerService, ScannerService>();
+    builder.Services.AddScoped<PrintService>();
+    builder.Services.AddScoped<ConnectionStatusService>();
+    builder.Services.AddScoped<IOfflineDataService, OfflineDataService>();
     builder.Services.AddIdentity<Operator, IdentityRole>(options => {
         // Password settings
         options.Password.RequireDigit = true;
@@ -97,6 +100,9 @@ try
 
     // Add printer service
     builder.Services.AddSingleton<IPrinterService, PrinterService>();
+
+    // Add background service untuk cek koneksi
+    builder.Services.AddHostedService<ConnectionMonitorService>();
 
     var app = builder.Build();
 

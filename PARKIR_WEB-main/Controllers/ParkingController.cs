@@ -27,6 +27,7 @@ namespace ParkIRC.Controllers
         private readonly ILogger<ParkingController> _logger;
         private readonly IHubContext<ParkingHub> _hubContext;
         private readonly IParkingService _parkingService;
+        private readonly PrintService _printService;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
         public ParkingController(
@@ -34,12 +35,14 @@ namespace ParkIRC.Controllers
             ILogger<ParkingController> logger,
             IParkingService parkingService,
             IHubContext<ParkingHub> hubContext,
+            PrintService printService,
             IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _logger = logger;
             _parkingService = parkingService;
             _hubContext = hubContext;
+            _printService = printService;
             _webHostEnvironment = webHostEnvironment;
         }
         
@@ -52,38 +55,40 @@ namespace ParkIRC.Controllers
                 var weekStart = today.AddDays(-(int)today.DayOfWeek);
                 var monthStart = new DateTime(today.Year, today.Month, 1);
 
-                // Get all required data in parallel for better performance
-                var totalSpacesTask = _context.ParkingSpaces.CountAsync();
-                var availableSpacesTask = _context.ParkingSpaces.CountAsync(s => !s.IsOccupied);
-                var dailyRevenueTask = _context.ParkingTransactions
+                // Get data sequentially to avoid DbContext concurrency issues
+                var totalSpaces = await _context.ParkingSpaces.CountAsync();
+                var availableSpaces = await _context.ParkingSpaces.CountAsync(s => !s.IsOccupied);
+                
+                var dailyRevenue = await _context.ParkingTransactions
                     .Where(t => t.PaymentTime.Date == today)
-                    .SumDecimalAsync(t => t.TotalAmount);
-                var weeklyRevenueTask = _context.ParkingTransactions
+                    .Select(t => t.TotalAmount)
+                    .SumAsync(t => t);
+                    
+                var weeklyRevenue = await _context.ParkingTransactions
                     .Where(t => t.PaymentTime.Date >= weekStart && t.PaymentTime.Date <= today)
-                    .SumDecimalAsync(t => t.TotalAmount);
-                var monthlyRevenueTask = _context.ParkingTransactions
+                    .Select(t => t.TotalAmount)
+                    .SumAsync(t => t);
+                    
+                var monthlyRevenue = await _context.ParkingTransactions
                     .Where(t => t.PaymentTime.Date >= monthStart && t.PaymentTime.Date <= today)
-                    .SumDecimalAsync(t => t.TotalAmount);
-                var recentActivityTask = GetRecentActivity();
-                var hourlyOccupancyTask = GetHourlyOccupancyData();
-                var vehicleDistributionTask = GetVehicleTypeDistribution();
-
-                await Task.WhenAll(
-                    totalSpacesTask, availableSpacesTask, dailyRevenueTask,
-                    weeklyRevenueTask, monthlyRevenueTask, recentActivityTask,
-                    hourlyOccupancyTask, vehicleDistributionTask
-                );
+                    .Select(t => t.TotalAmount)
+                    .SumAsync(t => t);
+                
+                // Get data that requires more complex queries
+                var recentActivity = await GetRecentActivity();
+                var hourlyOccupancy = await GetHourlyOccupancyData();
+                var vehicleDistribution = await GetVehicleTypeDistribution();
 
                 var dashboardData = new DashboardViewModel
                 {
-                    TotalSpaces = await totalSpacesTask,
-                    AvailableSpaces = await availableSpacesTask,
-                    DailyRevenue = await dailyRevenueTask,
-                    WeeklyRevenue = await weeklyRevenueTask,
-                    MonthlyRevenue = await monthlyRevenueTask,
-                    RecentActivity = await recentActivityTask,
-                    HourlyOccupancy = await hourlyOccupancyTask,
-                    VehicleDistribution = await vehicleDistributionTask
+                    TotalSpaces = totalSpaces,
+                    AvailableSpaces = availableSpaces,
+                    DailyRevenue = dailyRevenue,
+                    WeeklyRevenue = weeklyRevenue,
+                    MonthlyRevenue = monthlyRevenue,
+                    RecentActivity = recentActivity,
+                    HourlyOccupancy = hourlyOccupancy,
+                    VehicleDistribution = vehicleDistribution
                 };
                 
                 return View(dashboardData);
@@ -122,17 +127,20 @@ namespace ParkIRC.Controllers
         private async Task<List<OccupancyData>> GetHourlyOccupancyData()
         {
             var today = DateTime.Today;
+            
+            // Get the total spaces count first
             var totalSpaces = await _context.ParkingSpaces.CountAsync();
             
+            // Then get the hourly data with the total spaces value
             var hourlyData = await _context.ParkingTransactions
-                    .Where(t => t.EntryTime.Date == today)
-                    .GroupBy(t => t.EntryTime.Hour)
-                    .Select(g => new OccupancyData
-                    {
+                .Where(t => t.EntryTime.Date == today)
+                .GroupBy(t => t.EntryTime.Hour)
+                .Select(g => new OccupancyData
+                {
                     Hour = $"{g.Key:D2}:00",
                     Count = g.Count(),
-                        OccupancyPercentage = totalSpaces > 0 ? (double)g.Count() / totalSpaces * 100 : 0
-                    })
+                    OccupancyPercentage = totalSpaces > 0 ? (double)g.Count() / totalSpaces * 100 : 0
+                })
                 .ToListAsync();
 
             // Fill in missing hours with zero values
@@ -142,11 +150,16 @@ namespace ParkIRC.Controllers
                     Hour = $"{h:D2}:00",
                     Count = 0,
                     OccupancyPercentage = 0
-                });
+                }).ToList();
+            
+            // Merge the actual data with the zero-filled hours
+            foreach (var data in hourlyData)
+            {
+                var hour = int.Parse(data.Hour.Split(':')[0]);
+                allHours[hour] = data;
+            }
 
-            return allHours.Union(hourlyData, new OccupancyDataComparer())
-                    .OrderBy(x => x.Hour)
-                    .ToList();
+            return allHours.OrderBy(x => x.Hour).ToList();
         }
 
         private async Task<List<VehicleDistributionData>> GetVehicleTypeDistribution()
@@ -1425,14 +1438,25 @@ namespace ParkIRC.Controllers
                 // Update dashboard
                 await _hubContext.Clients.All.SendAsync("UpdateDashboard");
 
+                // Cetak tiket keluar
+                var receiptData = new {
+                    transactionNumber = transaction.TransactionNumber,
+                    vehicleNumber = transaction.Vehicle.VehicleNumber,
+                    entryTime = transaction.EntryTime,
+                    exitTime = transaction.ExitTime,
+                    duration = (transaction.ExitTime - transaction.EntryTime).TotalHours,
+                    amount = transaction.PaymentAmount,
+                    paymentMethod = transaction.PaymentMethod
+                };
+
+                // Cetak tiket menggunakan PrintService
+                var printSuccess = _printService.PrintTicket(FormatTicket(receiptData));
+
                 return Json(new { 
                     success = true, 
-                    message = "Kendaraan berhasil dicatat keluar",
-                    transaction = new {
-                        transactionNumber = transaction.TransactionNumber,
-                        amount = transaction.TotalAmount,
-                        paymentMethod = transaction.PaymentMethod
-                    }
+                    message = "Proses keluar berhasil",
+                    receiptData = receiptData,
+                    printSuccess = printSuccess
                 });
             }
             catch (Exception ex)
@@ -1440,6 +1464,27 @@ namespace ParkIRC.Controllers
                 _logger.LogError(ex, "Error processing vehicle exit");
                 return Json(new { success = false, message = "Terjadi kesalahan saat mencatat keluar kendaraan" });
             }
+        }
+
+        private string FormatTicket(dynamic data)
+        {
+            return $@"
+                TIKET PARKIR - KELUAR
+                ==================
+                
+                No. Transaksi: {data.transactionNumber}
+                No. Kendaraan: {data.vehicleNumber}
+                
+                Waktu Masuk: {data.entryTime:dd/MM/yyyy HH:mm}
+                Waktu Keluar: {data.exitTime:dd/MM/yyyy HH:mm}
+                Durasi: {Math.Floor(data.duration)} jam {Math.Round((data.duration % 1) * 60)} menit
+                
+                Total Biaya: Rp {data.amount:N0}
+                Metode Bayar: {data.paymentMethod}
+                
+                ==================
+                Terima Kasih
+            ";
         }
 
         [HttpGet]
@@ -1994,6 +2039,93 @@ namespace ParkIRC.Controllers
             ViewBag.TodayRevenue = todayRevenue;
             
             return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ProcessExitTicket(string barcode)
+        {
+            try {
+                // Cari data kendaraan berdasarkan barcode
+                var parkingTransaction = await _context.ParkingTransactions
+                    .Include(p => p.Vehicle)
+                    .Include(p => p.ParkingSpace)
+                    .FirstOrDefaultAsync(p => p.TransactionNumber == barcode && p.Status == "Active");
+
+                if (parkingTransaction == null)
+                    return Json(new { success = false, message = "Tiket tidak valid" });
+
+                // Hitung durasi dan biaya
+                var duration = DateTime.Now - parkingTransaction.EntryTime;
+                var totalAmount = CalculateParkingFee(duration, parkingTransaction.HourlyRate);
+
+                return Json(new {
+                    success = true,
+                    vehicleNumber = parkingTransaction.Vehicle.VehicleNumber,
+                    entryTime = parkingTransaction.EntryTime,
+                    entryPhoto = parkingTransaction.Vehicle.EntryPhotoPath,
+                    duration = duration.TotalHours,
+                    amount = totalAmount
+                });
+            }
+            catch (Exception ex) {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CompleteExit(string transactionNumber, decimal paymentAmount, string paymentMethod)
+        {
+            try {
+                var transaction = await _context.ParkingTransactions
+                    .Include(p => p.Vehicle)
+                    .Include(p => p.ParkingSpace)
+                    .FirstOrDefaultAsync(p => p.TransactionNumber == transactionNumber);
+
+                if (transaction == null)
+                    return Json(new { success = false, message = "Transaksi tidak ditemukan" });
+
+                // Update status transaksi
+                transaction.ExitTime = DateTime.Now;
+                transaction.PaymentAmount = paymentAmount;
+                transaction.PaymentMethod = paymentMethod;
+                transaction.PaymentStatus = "Paid";
+                transaction.Status = "Completed";
+
+                // Update status kendaraan dan slot parkir
+                transaction.Vehicle.IsParked = false;
+                transaction.Vehicle.ExitTime = DateTime.Now;
+                transaction.ParkingSpace.IsOccupied = false;
+                transaction.ParkingSpace.CurrentVehicleId = null;
+
+                await _context.SaveChangesAsync();
+
+                // Kirim sinyal untuk membuka gate
+                await _hubContext.Clients.All.SendAsync("OpenExitGate", transaction.ParkingSpace.SpaceNumber);
+
+                // Cetak tiket keluar
+                var receiptData = new {
+                    transactionNumber = transaction.TransactionNumber,
+                    vehicleNumber = transaction.Vehicle.VehicleNumber,
+                    entryTime = transaction.EntryTime,
+                    exitTime = transaction.ExitTime,
+                    duration = (transaction.ExitTime - transaction.EntryTime).TotalHours,
+                    amount = transaction.PaymentAmount,
+                    paymentMethod = transaction.PaymentMethod
+                };
+
+                // Cetak tiket menggunakan PrintService
+                var printSuccess = _printService.PrintTicket(FormatTicket(receiptData));
+
+                return Json(new { 
+                    success = true, 
+                    message = "Proses keluar berhasil",
+                    receiptData = receiptData,
+                    printSuccess = printSuccess
+                });
+            }
+            catch (Exception ex) {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
     }
 

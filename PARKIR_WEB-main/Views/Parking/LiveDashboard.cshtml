@@ -275,10 +275,10 @@
 </div>
 
 <!-- Modals -->
-<partial name="_VehicleEntryModal" />
-<partial name="_VehicleExitModal" />
-<partial name="_HistoryModal" />
-<partial name="_ReportModal" />
+@await Html.PartialAsync("_VehicleEntryModal", new ParkIRC.ViewModels.VehicleEntryViewModel())
+@await Html.PartialAsync("_VehicleExitModal", new ParkIRC.ViewModels.VehicleExitViewModel())
+@await Html.PartialAsync("_HistoryModal", new ParkIRC.ViewModels.HistoryViewModel())
+@await Html.PartialAsync("_ReportModal", new ParkIRC.ViewModels.ReportViewModel())
 
 @section Scripts {
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>

@@ -9,13 +9,18 @@ namespace ParkIRC.Hubs
 {
     public class ParkingHub : Hub
     {
+        private readonly IOfflineDataService _offlineDataService;
         private readonly ApplicationDbContext _context;
         private readonly ILogger<ParkingHub> _logger;
 
-        public ParkingHub(ApplicationDbContext context, ILogger<ParkingHub> logger)
+        public ParkingHub(
+            ApplicationDbContext context,
+            ILogger<ParkingHub> logger,
+            IOfflineDataService offlineDataService)
         {
             _context = context;
             _logger = logger;
+            _offlineDataService = offlineDataService;
         }
 
         /// <summary>
@@ -147,6 +152,26 @@ namespace ParkIRC.Hubs
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting paged activities");
+            }
+        }
+
+        public async Task OpenExitGate(string spaceNumber)
+        {
+            await Clients.All.SendAsync("OpenExitGate", spaceNumber);
+        }
+
+        public async Task SaveOfflineData(string data)
+        {
+            await _offlineDataService.SaveData(data);
+        }
+
+        public async Task SyncOfflineData()
+        {
+            var offlineData = await _offlineDataService.GetPendingData();
+            foreach (var data in offlineData)
+            {
+                // Proses sinkronisasi data
+                await ProcessOfflineData(data);
             }
         }
     }

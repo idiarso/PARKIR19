@@ -9,9 +9,8 @@ namespace ParkIRC.Extensions
             this IQueryable<T> source,
             Expression<Func<T, decimal>> selector)
         {
-            // First materialize the data, then perform the sum
-            var items = await source.Select(selector).ToListAsync();
-            return items.Sum();
+            // Use EF Core's built-in Sum without materializing the entire list first
+            return await source.Select(selector).SumAsync();
         }
 
         public static IQueryable<T> OrderByTimeSpan<T>(

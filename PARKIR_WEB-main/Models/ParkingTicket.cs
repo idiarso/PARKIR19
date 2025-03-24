@@ -18,6 +18,8 @@ namespace ParkIRC.Models
         
         public DateTime IssueTime { get; set; }
         
+        public DateTime EntryTime { get; set; }
+        
         public DateTime? ScanTime { get; set; }
         
         public bool IsUsed { get; set; }
@@ -26,6 +28,15 @@ namespace ParkIRC.Models
         
         [ForeignKey("VehicleId")]
         public virtual Vehicle? Vehicle { get; set; }
+        
+        [NotMapped]
+        public string VehicleNumber { get; set; } = string.Empty;
+        
+        [NotMapped]
+        public string VehicleType { get; set; } = string.Empty;
+        
+        [NotMapped]
+        public string ParkingSpaceNumber { get; set; } = string.Empty;
         
         public string? OperatorId { get; set; }
         
