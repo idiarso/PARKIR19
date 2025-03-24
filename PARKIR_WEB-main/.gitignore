@@ -468,3 +468,81 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# IDE specific files
+.idea/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# Package files
+*.deb
+*.rpm
+*.exe
+*.msi
+*.zip
+*.tar.gz
+
+# Large files
+*.7z
+*.dmg
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# DBeaver specific
+dbeaver-ce_latest_amd64.deb
+
+# Logs
+logs/
+*.log
+
+# User specific
+appsettings.Development.json
+
+# MS Visual Studio
+.vs/
+*_i.c
+*_p.c
+*_i.h
+*.ilk
+*.meta
+*.obj
+*.pch
+*.pdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
