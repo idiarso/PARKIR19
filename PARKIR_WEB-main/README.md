@@ -1,209 +1,144 @@
-# ParkIRC - Parking Management System
+# ParkIRC - Sistem Manajemen Parkir Modern
 
-ParkIRC adalah sistem manajemen parkir modern yang dibangun menggunakan .NET Core 6.0. Sistem ini menyediakan solusi lengkap untuk mengelola area parkir, termasuk manajemen kendaraan, tiket parkir, dan laporan.
+ParkIRC adalah sistem manajemen parkir modern yang menggabungkan otomatisasi di pintu masuk dan verifikasi operator di pintu keluar untuk pengalaman parkir yang efisien dan aman.
 
 ## Fitur Utama
 
-- Manajemen Parkir Kendaraan
-- Sistem Tiket dengan QR Code
-- Manajemen Operator/Staff
-- Dashboard Real-time
-- Laporan dan Analitik
-- Sistem Multi-user dengan Role-based Access Control
+### 1. Pintu Masuk (Full Otomatis)
+- Operasi dipicu oleh push button yang ditekan pengguna
+- Deteksi otomatis kendaraan dan plat nomor menggunakan kamera
+- Cetak tiket dengan barcode secara otomatis
+- Gate terbuka otomatis setelah tiket diambil
+- Pencatatan otomatis data masuk ke database (waktu, foto, plat nomor)
+
+### 2. Pintu Keluar (Operator)
+- Scan barcode tiket oleh operator
+- Perhitungan biaya otomatis berdasarkan durasi
+- Verifikasi pembayaran oleh operator
+- Cetak struk pembayaran
+- Gate terbuka setelah pembayaran selesai
+
+### 3. Monitoring Real-time
+- Status pintu masuk dan keluar
+- Status perangkat (kamera, printer, push button)
+- Riwayat transaksi terkini
+- Riwayat kendaraan dengan filter:
+  - Status (Masuk/Keluar)
+  - Rentang waktu
+  - Jenis kendaraan
+  - Plat nomor
+- Notifikasi kejadian penting
+- Monitoring jumlah kendaraan
+
+### 4. Manajemen
+- Kelola slot parkir
+- Kelola operator dan shift
+- Konfigurasi tarif parkir
+- Pengaturan kamera dan printer
+- Riwayat lengkap kendaraan:
+  - Pencarian berdasarkan status masuk/keluar
+  - Filter berdasarkan tanggal
+  - Export data ke Excel/PDF
+  - Detail transaksi per kendaraan
+- Laporan dan statistik
+
+## Teknologi
+
+- **Backend**: ASP.NET Core 6.0
+- **Frontend**: Bootstrap 5, jQuery
+- **Database**: PostgreSQL
+- **Real-time**: SignalR
+- **Hardware Integration**:
+  - Kamera IP untuk ANPR (Automatic Number Plate Recognition)
+  - Thermal printer untuk tiket dan struk
+  - Push button untuk trigger pintu masuk
+  - Gate controller untuk palang pintu
+  - Barcode scanner di pintu keluar
 
 ## Persyaratan Sistem
 
-- Windows 64-bit
-- .NET 6.0 Runtime
-- SQLite
-- Port 5126 dan 5127 tersedia
-- Minimal RAM 4GB
-- Ruang disk minimal 500MB
+- .NET 6.0 SDK
+- PostgreSQL 13+
+- Nginx/Apache (untuk production)
+- Modern web browser
+- Perangkat keras yang kompatibel
 
 ## Instalasi
-
-### Menggunakan Installer
-
-1. Download file installer (.msi) dari [releases page](https://github.com/yourusername/ParkIRC/releases)
-2. Jalankan installer
-3. Ikuti langkah-langkah instalasi
-4. Aplikasi akan otomatis terbuka setelah instalasi selesai
-
-### Manual Installation
-
-1. Download file zip dari releases
-2. Extract ke folder yang diinginkan
-3. Jalankan `start.bat`
-
-## Penggunaan
-
-### Login Default
-
-- Email: admin@parkingsystem.com
-- Password: Admin@123
-
-menjalankan : cd /home/idiarso/Desktop/APP/PARKIR_WEB-main && dotnet run --project=ParkIRC.csproj
-
-### Mengakses Aplikasi
-
-1. Buka browser
-2. Akses http://localhost:5126 atau https://localhost:5127
-3. Login menggunakan kredensial di atas
-
-## Pengaturan Kamera dan ROI
-
-### Konfigurasi Dasar
-Sistem menggunakan pengaturan kamera yang dapat disesuaikan untuk kondisi pencahayaan berbeda. File konfigurasi berada di `appsettings.json`:
-
-```json
-{
-  "CameraSettings": {
-    "Resolution": {
-      "Width": 1280,
-      "Height": 720
-    },
-    "ROI": {
-      "X": 0,
-      "Y": 0,
-      "Width": 640,
-      "Height": 480
-    }
-  }
-}
-```
-
-### Optimasi untuk Kondisi Pencahayaan Berbeda
-
-#### 1. Kondisi Pencahayaan Rendah (Malam/Indoor)
-```json
-{
-  "CameraSettings": {
-    "LowLight": {
-      "Exposure": 150,     // Nilai 100-200
-      "Gain": 2.0,        // Nilai 1.5-2.5
-      "Brightness": 60,    // Nilai 55-65
-      "Contrast": 55      // Nilai 50-60
-    }
-  }
-}
-```
-
-#### 2. Kondisi Pencahayaan Tinggi (Siang/Outdoor)
-```json
-{
-  "CameraSettings": {
-    "BrightLight": {
-      "Exposure": 50,      // Nilai 30-70
-      "Gain": 1.0,        // Nilai 1.0-1.2
-      "Brightness": 40,    // Nilai 35-45
-      "Contrast": 45      // Nilai 40-50
-    }
-  }
-}
-```
-
-### Tips Pengaturan ROI dengan Pencahayaan Berbeda
-
-1. **Kondisi Gelap**:
-   - Perbesar area ROI untuk menangkap lebih banyak cahaya
-   - Tingkatkan Exposure dan Gain
-   - Gunakan nilai Brightness yang lebih tinggi
-   - Pastikan ada pencahayaan tambahan di area scan
-
-2. **Kondisi Terang**:
-   - Area ROI bisa lebih kecil dan fokus
-   - Kurangi Exposure untuk menghindari overexposure
-   - Turunkan Gain untuk mengurangi noise
-   - Sesuaikan Contrast untuk ketajaman gambar
-
-3. **Optimasi Performa**:
-   - Mulai dengan area ROI yang kecil
-   - Sesuaikan ukuran ROI jika hasil tidak optimal
-   - Monitor CPU usage saat penyesuaian
-   - Test di berbagai kondisi pencahayaan
-
-### Troubleshooting
-
-1. **Gambar Terlalu Gelap**:
-   - Tingkatkan Exposure (+=50)
-   - Naikkan Brightness (+=10)
-   - Tambah Gain (+0.5)
-
-2. **Gambar Terlalu Terang**:
-   - Kurangi Exposure (-=50)
-   - Turunkan Brightness (-=10)
-   - Kurangi Gain (-0.5)
-
-3. **Gambar Blur**:
-   - Pastikan fokus kamera tepat
-   - Sesuaikan area ROI
-   - Tingkatkan Contrast
-   - Kurangi Gain
-
-4. **CPU Usage Tinggi**:
-   - Kecilkan area ROI
-   - Turunkan resolusi
-   - Kurangi framerate
-   - Monitor penggunaan memory
-
-### Rekomendasi Hardware
-- Kamera: Minimal 720p dengan manual focus
-- Processor: Intel i3/AMD Ryzen 3 atau lebih tinggi
-- RAM: Minimal 4GB
-- Storage: SSD direkomendasikan
-
-## Dokumentasi Lengkap
-Untuk panduan lengkap, silakan lihat:
-- [Manual Book](docs/ParkIRC-Manual.pdf)
-- [Quick Guide](docs/ParkIRC-Quick-Guide.pdf)
-- [Screenshot Guide](docs/screenshot-guide.md)
-
-## Pengembangan
-
-### Prerequisites
-
-- Visual Studio 2022
-- .NET 6.0 SDK
-- WiX Toolset v3.14.1 (untuk membuat installer)
-
-### Build dari Source
 
 1. Clone repository
 ```bash
 git clone https://github.com/yourusername/ParkIRC.git
-```
-
-2. Buka solution di Visual Studio
-```bash
 cd ParkIRC
-start ParkIRC.sln
 ```
 
-3. Restore packages
+2. Restore dependencies
 ```bash
 dotnet restore
 ```
 
-4. Build project
+3. Update database
 ```bash
-dotnet build
+dotnet ef database update
 ```
 
-5. Run aplikasi
+4. Setup konfigurasi
+- Copy `appsettings.example.json` ke `appsettings.json`
+- Sesuaikan koneksi database
+- Konfigurasi printer dan kamera
+- Setup email untuk notifikasi
+
+5. Jalankan aplikasi
 ```bash
 dotnet run
 ```
 
+## Konfigurasi Hardware
+
+### Pintu Masuk
+1. Setup kamera IP
+   - Konfigurasi di `CameraSettings`
+   - Pastikan posisi optimal untuk ANPR
+   
+2. Koneksi push button
+   - Ikuti panduan di `manualbook/mikrocontroller_avr_setup.md`
+   - Test koneksi menggunakan simulator
+
+3. Setup printer tiket
+   - Ikuti langkah di `setup-printer.sh`
+   - Test cetak tiket
+
+### Pintu Keluar
+1. Koneksi barcode scanner
+   - Konfigurasi sebagai keyboard emulation
+   - Test pembacaan tiket
+
+2. Setup printer struk
+   - Konfigurasi di `PrinterSettings`
+   - Test cetak struk
+
+## Dokumentasi
+
+- [Panduan Administrator](manualbook/administrator_server_guide.md)
+- [Setup Mikrokontroler](manualbook/mikrocontroller_avr_setup.md)
+- [Database Real-time](manualbook/realtime_database.md)
+- [Alur Sistem](system_flow.md)
+- [Dokumentasi Teknis Lengkap](readmeplus.md)
+- [Manual Penggunaan](ParkIRC-Manual.md)
+
 ## Kontribusi
 
-Silakan berkontribusi dengan membuat pull request. Untuk perubahan major, harap buka issue terlebih dahulu untuk mendiskusikan perubahan yang diinginkan.
+1. Fork repository
+2. Buat branch fitur (`git checkout -b feature/AmazingFeature`)
+3. Commit perubahan (`git commit -m 'Add some AmazingFeature'`)
+4. Push ke branch (`git push origin feature/AmazingFeature`)
+5. Buat Pull Request
 
 ## Lisensi
 
-[MIT License](LICENSE)
+Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Kontak
 
-- Email: your.email@example.com
-- Website: https://yourwebsite.com
-- Issue Tracker: https://github.com/yourusername/ParkIRC/issues
+Your Name - [@yourtwitter](https://twitter.com/yourtwitter) - email@example.com
+
+Project Link: [https://github.com/yourusername/ParkIRC](https://github.com/yourusername/ParkIRC)
