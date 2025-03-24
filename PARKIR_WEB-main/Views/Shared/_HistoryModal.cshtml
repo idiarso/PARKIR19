@@ -1,0 +1,187 @@
+<!-- History Modal -->
+<div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="historyModalLabel">Riwayat Transaksi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col">
+                        <div class="input-group">
+                            <input type="text" id="searchHistory" class="form-control" placeholder="Cari nomor kendaraan...">
+                            <button class="btn btn-outline-secondary" type="button" onclick="searchTransactionHistory()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <select id="filterStatus" class="form-select" onchange="filterTransactionHistory()">
+                            <option value="">Semua Status</option>
+                            <option value="Active">Aktif</option>
+                            <option value="Completed">Selesai</option>
+                            <option value="Cancelled">Dibatalkan</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <input type="date" id="filterDate" class="form-control" onchange="filterTransactionHistory()">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>No. Transaksi</th>
+                                <th>No. Kendaraan</th>
+                                <th>Waktu Masuk</th>
+                                <th>Waktu Keluar</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <!-- Data will be populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span>Menampilkan <span id="currentCount">0</span> dari <span id="totalCount">0</span> transaksi</span>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="loadMoreHistory()">Muat Lebih Banyak</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let historyPage = 1;
+const historyPageSize = 10;
+
+function searchTransactionHistory() {
+    const searchTerm = document.getElementById('searchHistory').value;
+    const status = document.getElementById('filterStatus').value;
+    const date = document.getElementById('filterDate').value;
+    
+    historyPage = 1; // Reset page when searching
+    loadTransactionHistory(searchTerm, status, date);
+}
+
+function filterTransactionHistory() {
+    const searchTerm = document.getElementById('searchHistory').value;
+    const status = document.getElementById('filterStatus').value;
+    const date = document.getElementById('filterDate').value;
+    
+    historyPage = 1; // Reset page when filtering
+    loadTransactionHistory(searchTerm, status, date);
+}
+
+function loadMoreHistory() {
+    historyPage++;
+    const searchTerm = document.getElementById('searchHistory').value;
+    const status = document.getElementById('filterStatus').value;
+    const date = document.getElementById('filterDate').value;
+    
+    loadTransactionHistory(searchTerm, status, date, true);
+}
+
+function loadTransactionHistory(searchTerm = '', status = '', date = '', append = false) {
+    const url = `/Parking/GetTransactionHistory?page=${historyPage}&pageSize=${historyPageSize}&search=${searchTerm}&status=${status}&date=${date}`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('historyTableBody');
+            if (!append) {
+                tbody.innerHTML = '';
+            }
+            
+            data.transactions.forEach(transaction => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${transaction.transactionNumber}</td>
+                    <td>${transaction.vehicleNumber}</td>
+                    <td>${new Date(transaction.entryTime).toLocaleString()}</td>
+                    <td>${transaction.exitTime ? new Date(transaction.exitTime).toLocaleString() : '-'}</td>
+                    <td>Rp ${transaction.totalAmount.toLocaleString()}</td>
+                    <td><span class="badge bg-${getStatusBadgeClass(transaction.status)}">${transaction.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="printReceipt('${transaction.id}')">
+                            <i class="fas fa-print"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            document.getElementById('currentCount').textContent = data.currentCount;
+            document.getElementById('totalCount').textContent = data.totalCount;
+            
+            // Hide load more button if no more data
+            const loadMoreBtn = document.querySelector('button[onclick="loadMoreHistory()"]');
+            if (data.currentCount >= data.totalCount) {
+                loadMoreBtn.style.display = 'none';
+            } else {
+                loadMoreBtn.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading transaction history:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Gagal memuat riwayat transaksi'
+            });
+        });
+}
+
+function getStatusBadgeClass(status) {
+    switch (status) {
+        case 'Active':
+            return 'primary';
+        case 'Completed':
+            return 'success';
+        case 'Cancelled':
+            return 'danger';
+        default:
+            return 'secondary';
+    }
+}
+
+function printReceipt(transactionId) {
+    fetch(`/Parking/PrintReceipt/${transactionId}`)
+        .then(response => {
+            if (response.ok) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Sukses',
+                    text: 'Struk berhasil dicetak'
+                });
+            } else {
+                throw new Error('Failed to print receipt');
+            }
+        })
+        .catch(error => {
+            console.error('Error printing receipt:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Gagal mencetak struk'
+            });
+        });
+}
+
+// Initialize history when modal is shown
+document.getElementById('historyModal').addEventListener('show.bs.modal', function () {
+    historyPage = 1;
+    loadTransactionHistory();
+});
+</script> 

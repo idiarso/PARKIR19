@@ -1,0 +1,232 @@
+@model ParkIRC.Models.Shift
+
+@{
+    ViewData["Title"] = "Buat Shift Baru";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Buat Shift Baru
+                    </h6>
+                    <a href="@Url.Action("Shifts", "Management")" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            <div asp-validation-summary="All" class="text-danger"></div>
+                        </div>
+                    }
+
+                    <form id="createShiftForm" method="post">
+                        @Html.AntiForgeryToken()
+                        
+                        <div class="mb-3">
+                            <label for="Name" class="form-label">Nama Shift <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="Name" name="Name" value="@(Model?.Name)" required />
+                            <div class="invalid-feedback">Nama shift wajib diisi</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="startTime" class="form-label">Waktu Mulai <span class="text-danger">*</span></label>
+                                    <input type="time" class="form-control" id="startTime" name="startTime" required />
+                                    <div class="invalid-feedback">Waktu mulai wajib diisi</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="endTime" class="form-label">Waktu Selesai <span class="text-danger">*</span></label>
+                                    <input type="time" class="form-control" id="endTime" name="endTime" required />
+                                    <div class="invalid-feedback">Waktu selesai wajib diisi</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label d-block">Hari Kerja <span class="text-danger">*</span></label>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input workday-checkbox" id="monday" name="WorkDays" value="Monday">
+                                <label class="form-check-label" for="monday">Senin</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input workday-checkbox" id="tuesday" name="WorkDays" value="Tuesday">
+                                <label class="form-check-label" for="tuesday">Selasa</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input workday-checkbox" id="wednesday" name="WorkDays" value="Wednesday">
+                                <label class="form-check-label" for="wednesday">Rabu</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input workday-checkbox" id="thursday" name="WorkDays" value="Thursday">
+                                <label class="form-check-label" for="thursday">Kamis</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input workday-checkbox" id="friday" name="WorkDays" value="Friday">
+                                <label class="form-check-label" for="friday">Jumat</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input workday-checkbox" id="saturday" name="WorkDays" value="Saturday">
+                                <label class="form-check-label" for="saturday">Sabtu</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input workday-checkbox" id="sunday" name="WorkDays" value="Sunday">
+                                <label class="form-check-label" for="sunday">Minggu</label>
+                            </div>
+                            <div id="workDaysError" class="text-danger mt-2" style="display: none;">
+                                Pilih minimal satu hari kerja
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Description" class="form-label">Deskripsi</label>
+                            <textarea class="form-control" id="Description" name="Description" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="MaxOperators" class="form-label">Jumlah Operator Maksimal <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="MaxOperators" name="MaxOperators" min="1" value="1" required />
+                            <div class="invalid-feedback">Jumlah operator maksimal wajib diisi</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="IsActive" name="IsActive" value="true" checked />
+                                <input type="hidden" name="IsActive" value="false" />
+                                <label class="form-check-label" for="IsActive">Aktif</label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Simpan Shift
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#createShiftForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Reset validation states
+                $('.is-invalid').removeClass('is-invalid');
+                $('#workDaysError').hide();
+                
+                // Validate form
+                var isValid = true;
+                
+                // Validate name
+                var name = $('#Name').val().trim();
+                if (!name) {
+                    $('#Name').addClass('is-invalid');
+                    isValid = false;
+                }
+                
+                // Validate times
+                if (!$('#startTime').val()) {
+                    $('#startTime').addClass('is-invalid');
+                    isValid = false;
+                }
+                
+                if (!$('#endTime').val()) {
+                    $('#endTime').addClass('is-invalid');
+                    isValid = false;
+                }
+                
+                // Validate work days
+                if (!$('.workday-checkbox:checked').length) {
+                    $('#workDaysError').show();
+                    isValid = false;
+                }
+                
+                if (!isValid) {
+                    return false;
+                }
+                
+                // Collect form data manually to ensure all fields are included
+                var formData = {
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val(),
+                    Name: $('#Name').val().trim(),
+                    startTime: $('#startTime').val(),
+                    endTime: $('#endTime').val(),
+                    Description: $('#Description').val(),
+                    MaxOperators: $('#MaxOperators').val(),
+                    IsActive: $('#IsActive').is(':checked'),
+                    WorkDays: []
+                };
+                
+                // Collect selected workdays
+                $('.workday-checkbox:checked').each(function() {
+                    formData.WorkDays.push($(this).val());
+                });
+                
+                // Log form data for debugging
+                console.log('Form data:', formData);
+                
+                // Submit form via AJAX
+                $.ajax({
+                    url: '@Url.Action("CreateShift", "Management")',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: response.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(function() {
+                                window.location.href = '@Url.Action("Shifts", "Management")';
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.message
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        var errorMessage = 'Terjadi kesalahan saat menyimpan shift';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMessage
+                        });
+                    }
+                });
+            });
+
+            // Real-time validation
+            $('#Name').on('input', function() {
+                $(this).removeClass('is-invalid');
+            });
+
+            $('#startTime, #endTime').on('change', function() {
+                $(this).removeClass('is-invalid');
+            });
+
+            $('.workday-checkbox').on('change', function() {
+                if ($('.workday-checkbox:checked').length > 0) {
+                    $('#workDaysError').hide();
+                }
+            });
+        });
+    </script>
+} 

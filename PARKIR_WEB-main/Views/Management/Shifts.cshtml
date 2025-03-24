@@ -1,0 +1,193 @@
+@model IEnumerable<ParkIRC.Models.Shift>
+@{
+    ViewData["Title"] = "Kelola Shift";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-clock me-2"></i>Kelola Shift
+                    </h6>
+                    <a href="@Url.Action("CreateShift", "Management")" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-2"></i>Tambah Shift Baru
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="shiftsTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Nama</th>
+                                    <th>Waktu Mulai</th>
+                                    <th>Waktu Selesai</th>
+                                    <th>Hari Kerja</th>
+                                    <th>Operator</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td>@item.StartTime.ToString("HH:mm")</td>
+                                        <td>@item.EndTime.ToString("HH:mm")</td>
+                                        <td>
+                                            @string.Join(", ", item.WorkDays.Select(d => {
+                                                return d switch {
+                                                    "Monday" => "Senin",
+                                                    "Tuesday" => "Selasa",
+                                                    "Wednesday" => "Rabu",
+                                                    "Thursday" => "Kamis",
+                                                    "Friday" => "Jumat",
+                                                    "Saturday" => "Sabtu",
+                                                    "Sunday" => "Minggu",
+                                                    _ => d
+                                                };
+                                            }))
+                                        </td>
+                                        <td>
+                                            @if (item.Operators != null && item.Operators.Any())
+                                            {
+                                                <span class="badge bg-info">@item.Operators.Count / @item.MaxOperators</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning">0 / @item.MaxOperators</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input toggle-shift-status" type="checkbox" 
+                                                       id="shift-@item.Id" 
+                                                       data-shift-id="@item.Id" 
+                                                       @(item.IsActive ? "checked" : "")>
+                                                <label class="form-check-label" for="shift-@item.Id">
+                                                    <span class="badge @(item.IsActive ? "bg-success" : "bg-danger")">
+                                                        @(item.IsActive ? "Aktif" : "Nonaktif")
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="@Url.Action("EditShift", new { id = item.Id })" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-danger delete-shift" data-shift-id="@item.Id">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable
+            $('#shiftsTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/id.json'
+                },
+                order: [[1, 'asc']], // Sort by start time by default
+                columnDefs: [
+                    { orderable: false, targets: [5, 6] } // Disable sorting for status and action columns
+                ]
+            });
+
+            // Handle shift status toggle
+            $('.toggle-shift-status').change(function() {
+                const shiftId = $(this).data('shift-id');
+                const isActive = $(this).prop('checked');
+                const statusBadge = $(this).siblings('label').find('.badge');
+
+                $.post('@Url.Action("ToggleShiftStatus", "Management")', 
+                    { id: shiftId, isActive: isActive },
+                    function(result) {
+                        if (result.success) {
+                            statusBadge
+                                .removeClass('bg-success bg-danger')
+                                .addClass(isActive ? 'bg-success' : 'bg-danger')
+                                .text(isActive ? 'Aktif' : 'Nonaktif');
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: 'Status shift berhasil diperbarui',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: result.message
+                            });
+                            // Revert the toggle if failed
+                            $(this).prop('checked', !isActive);
+                        }
+                    }
+                ).fail(function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Gagal memperbarui status shift'
+                    });
+                    // Revert the toggle if failed
+                    $(this).prop('checked', !isActive);
+                });
+            });
+
+            // Handle shift deletion
+            $('.delete-shift').click(function() {
+                const shiftId = $(this).data('shift-id');
+                
+                Swal.fire({
+                    title: 'Hapus Shift?',
+                    text: "Shift yang dihapus tidak dapat dikembalikan!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Ya, hapus!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.post('@Url.Action("DeleteShift")', { id: shiftId }, function(result) {
+                            if (result.success) {
+                                location.reload();
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: result.message
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+} 

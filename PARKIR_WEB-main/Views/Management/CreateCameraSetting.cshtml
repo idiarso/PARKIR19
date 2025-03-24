@@ -1,0 +1,207 @@
+@model ParkIRC.Models.CameraSettings
+
+@{
+    ViewData["Title"] = "Tambah Pengaturan Kamera";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-3">@ViewData["Title"]</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="CameraSettings">Pengaturan Kamera</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Tambah</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <form asp-action="CreateCameraSetting" method="post">
+                        @Html.AntiForgeryToken()
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="m-0">Informasi Dasar</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label asp-for="ProfileName" class="form-label"></label>
+                                            <input asp-for="ProfileName" class="form-control" placeholder="Masukkan nama profil..." />
+                                            <span asp-validation-for="ProfileName" class="text-danger"></span>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label asp-for="LightingCondition" class="form-label"></label>
+                                            <select asp-for="LightingCondition" class="form-select">
+                                                <option value="Normal">Normal</option>
+                                                <option value="LowLight">Pencahayaan Rendah</option>
+                                                <option value="BrightLight">Pencahayaan Tinggi</option>
+                                            </select>
+                                            <span asp-validation-for="LightingCondition" class="text-danger"></span>
+                                        </div>
+                                        
+                                        <div class="mb-3 form-check">
+                                            <input asp-for="IsActive" class="form-check-input" />
+                                            <label asp-for="IsActive" class="form-check-label"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mb-3">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="m-0">Resolusi</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="ResolutionWidth" class="form-label"></label>
+                                                    <input asp-for="ResolutionWidth" class="form-control" />
+                                                    <span asp-validation-for="ResolutionWidth" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="ResolutionHeight" class="form-label"></label>
+                                                    <input asp-for="ResolutionHeight" class="form-control" />
+                                                    <span asp-validation-for="ResolutionHeight" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="m-0">Region of Interest (ROI)</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="ROI_X" class="form-label"></label>
+                                                    <input asp-for="ROI_X" class="form-control" />
+                                                    <span asp-validation-for="ROI_X" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="ROI_Y" class="form-label"></label>
+                                                    <input asp-for="ROI_Y" class="form-control" />
+                                                    <span asp-validation-for="ROI_Y" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="ROI_Width" class="form-label"></label>
+                                                    <input asp-for="ROI_Width" class="form-control" />
+                                                    <span asp-validation-for="ROI_Width" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="ROI_Height" class="form-label"></label>
+                                                    <input asp-for="ROI_Height" class="form-control" />
+                                                    <span asp-validation-for="ROI_Height" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mb-3">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="m-0">Pengaturan Pencahayaan</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="Exposure" class="form-label"></label>
+                                                    <input asp-for="Exposure" class="form-control" />
+                                                    <span asp-validation-for="Exposure" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="Gain" class="form-label"></label>
+                                                    <input asp-for="Gain" class="form-control" type="number" step="0.1" />
+                                                    <span asp-validation-for="Gain" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="Brightness" class="form-label"></label>
+                                                    <input asp-for="Brightness" class="form-control" />
+                                                    <span asp-validation-for="Brightness" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label asp-for="Contrast" class="form-label"></label>
+                                                    <input asp-for="Contrast" class="form-control" />
+                                                    <span asp-validation-for="Contrast" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col">
+                                <a asp-action="CameraSettings" class="btn btn-secondary">Kembali</a>
+                                <button type="submit" class="btn btn-primary">Simpan</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        $(document).ready(function() {
+            // Update ROI fields based on lighting condition
+            $('#LightingCondition').on('change', function() {
+                const condition = $(this).val();
+                
+                if (condition === 'LowLight') {
+                    $('#Exposure').val(150);
+                    $('#Gain').val(2.0);
+                    $('#Brightness').val(60);
+                    $('#Contrast').val(55);
+                } else if (condition === 'BrightLight') {
+                    $('#Exposure').val(50);
+                    $('#Gain').val(1.0);
+                    $('#Brightness').val(40);
+                    $('#Contrast').val(45);
+                } else { // Normal
+                    $('#Exposure').val(100);
+                    $('#Gain').val(1.0);
+                    $('#Brightness').val(50);
+                    $('#Contrast').val(50);
+                }
+            });
+        });
+    </script>
+} 

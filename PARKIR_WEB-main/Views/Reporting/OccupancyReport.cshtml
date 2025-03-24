@@ -1,0 +1,97 @@
+@model dynamic
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Occupancy Report</h4>
+                    <div class="card-tools">
+                        <div class="input-group">
+                            <input type="date" id="startDate" class="form-control" onchange="updateReport()" />
+                            <input type="date" id="endDate" class="form-control ml-2" onchange="updateReport()" />
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <canvas id="occupancyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Total Vehicles</th>
+                                        <th>Average Stay Duration (Hours)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var data in Model)
+                                    {
+                                        <tr>
+                                            <td>@data.Date.ToString("MM/dd/yyyy")</td>
+                                            <td>@data.TotalVehicles</td>
+                                            <td>@data.AverageStayDuration.ToString("N1")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const occupancyData = @Html.Raw(Json.Serialize(Model));
+        const ctx = document.getElementById('occupancyChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: occupancyData.map(d => new Date(d.Date).toLocaleDateString()),
+                datasets: [
+                    {
+                        label: 'Total Vehicles',
+                        data: occupancyData.map(d => d.TotalVehicles),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Average Stay Duration (Hours)',
+                        data: occupancyData.map(d => d.AverageStayDuration),
+                        borderColor: 'rgb(255, 99, 132)',
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Set initial dates
+        document.getElementById('startDate').value = occupancyData[0].Date.split('T')[0];
+        document.getElementById('endDate').value = occupancyData[occupancyData.length - 1].Date.split('T')[0];
+
+        function updateReport() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            window.location.href = `/Reporting/OccupancyReport?startDate=${startDate}&endDate=${endDate}`;
+        }
+    </script>
+}

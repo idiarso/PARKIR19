@@ -1,0 +1,227 @@
+@using ParkIRC.Models
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+}
+
+<div class="container-fluid py-4">
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="card dashboard-card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Total Spaces</h6>
+                            <h3 class="mt-2 mb-0">@Model.TotalSpaces</h3>
+                        </div>
+                        <i class="fas fa-parking card-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card dashboard-card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Available Spaces</h6>
+                            <h3 class="mt-2 mb-0">@Model.AvailableSpaces</h3>
+                        </div>
+                        <i class="fas fa-check-circle card-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card dashboard-card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Today's Revenue</h6>
+                            <h3 class="mt-2 mb-0">@Model.DailyRevenue.ToString("C0")</h3>
+                        </div>
+                        <i class="fas fa-money-bill-wave card-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card dashboard-card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Occupancy Rate</h6>
+                            <h3 class="mt-2 mb-0">@(((Model.TotalSpaces - Model.AvailableSpaces) * 100.0 / Model.TotalSpaces).ToString("F1"))%</h3>
+                        </div>
+                        <i class="fas fa-chart-pie card-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-8 col-lg-7">
+            <div class="card dashboard-card h-100">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Hourly Occupancy</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="hourlyOccupancyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-lg-5">
+            <div class="card dashboard-card h-100">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Vehicle Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="vehicleDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0">Recent Activity</h6>
+                    <div class="card-actions">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="refreshActivity()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover activity-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Vehicle</th>
+                                    <th>Type</th>
+                                    <th>Action</th>
+                                    <th class="text-end">Fee</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var activity in Model.RecentActivity)
+                                {
+                                    <tr>
+                                        <td>@activity.Timestamp.ToString("HH:mm:ss")</td>
+                                        <td>@activity.LicensePlate</td>
+                                        <td>@activity.VehicleType</td>
+                                        <td>
+                                            <span class="badge bg-@(activity.ActionType == "Entry" ? "success" : "danger")">
+                                                @activity.ActionType
+                                            </span>
+                                        </td>
+                                        <td class="text-end">@(activity.Fee > 0 ? activity.Fee.ToString("C0") : "-")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Chart configuration with responsive options
+        const chartConfig = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: window.innerWidth < 768 ? 'bottom' : 'right'
+                }
+            }
+        };
+
+        // Hourly Occupancy Chart
+        new Chart(document.getElementById('hourlyOccupancyChart'), {
+            type: 'line',
+            data: {
+                labels: @Json.Serialize(Model.HourlyOccupancy.Select(x => x.Hour)),
+                datasets: [{
+                    label: 'Occupancy Rate (%)',
+                    data: @Json.Serialize(Model.HourlyOccupancy.Select(x => x.OccupancyPercentage)),
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1,
+                    fill: false
+                }]
+            },
+            options: {
+                ...chartConfig,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: value => `${value}%`
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+
+        // Vehicle Distribution Chart
+        new Chart(document.getElementById('vehicleDistributionChart'), {
+            type: 'doughnut',
+            data: {
+                labels: @Json.Serialize(Model.VehicleDistribution.Select(x => x.Type)),
+                datasets: [{
+                    data: @Json.Serialize(Model.VehicleDistribution.Select(x => x.Count)),
+                    backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)',
+                        'rgb(255, 205, 86)'
+                    ]
+                }]
+            },
+            options: {
+                ...chartConfig,
+                cutout: '60%'
+            }
+        });
+
+        // Handle window resize for chart responsiveness
+        window.addEventListener('resize', () => {
+            const charts = Chart.instances;
+            charts.forEach(chart => {
+                chart.options.plugins.legend.position = window.innerWidth < 768 ? 'bottom' : 'right';
+                chart.update();
+            });
+        });
+
+        // Function to refresh activity table
+        function refreshActivity() {
+            // Add your refresh logic here
+            location.reload();
+        }
+    </script>
+}

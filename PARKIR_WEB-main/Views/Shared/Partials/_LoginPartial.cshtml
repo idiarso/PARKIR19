@@ -1,0 +1,35 @@
+@using Microsoft.AspNetCore.Identity
+@using ParkIRC.Models
+@inject UserManager<Operator> UserManager
+@inject SignInManager<Operator> SignInManager
+
+<div class="ml-auto d-flex align-items-center">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <li class="geex-header__menu__item" style="list-style-type: none;">
+            <a class="geex-header__menu__link" id="manage" asp-controller="Auth" asp-action="Profile" title="Manage">
+                <i class="fas fa-user-circle me-1"></i> @UserManager.GetUserName(User)
+            </a>
+        </li>
+        <li class="geex-header__menu__item" style="list-style-type: none; margin-left: 10px;">
+            <form id="logoutForm" class="form-inline" asp-controller="Auth" asp-action="Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <button id="logout" type="submit" class="geex-header__menu__link btn btn-link">
+                    <i class="fas fa-sign-out-alt me-1"></i> Logout
+                </button>
+            </form>
+        </li>
+    }
+    else
+    {
+        <li class="geex-header__menu__item" style="list-style-type: none;">
+            <a class="geex-header__menu__link" id="register" asp-controller="Auth" asp-action="Register">
+                <i class="fas fa-user-plus me-1"></i> Register
+            </a>
+        </li>
+        <li class="geex-header__menu__item" style="list-style-type: none; margin-left: 10px;">
+            <a class="geex-header__menu__link" id="login" asp-controller="Auth" asp-action="Login">
+                <i class="fas fa-sign-in-alt me-1"></i> Login
+            </a>
+        </li>
+    }
+</div> 

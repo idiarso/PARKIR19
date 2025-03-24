@@ -1,0 +1,192 @@
+@model IEnumerable<ParkIRC.Models.CameraSettings>
+
+@{
+    ViewData["Title"] = "Pengaturan Kamera";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2 class="mb-3">@ViewData["Title"]</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a asp-action="CreateCameraSetting" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Tambah Pengaturan Kamera
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="cameraSettingsTable">
+                        <thead class="bg-primary text-white">
+                            <tr>
+                                <th>Nama Profil</th>
+                                <th>Resolusi</th>
+                                <th>ROI</th>
+                                <th>Kondisi Pencahayaan</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr data-id="@item.Id">
+                                    <td>@item.ProfileName</td>
+                                    <td>@item.ResolutionWidth x @item.ResolutionHeight</td>
+                                    <td>X:@item.ROI_X Y:@item.ROI_Y W:@item.ROI_Width H:@item.ROI_Height</td>
+                                    <td>@item.LightingCondition</td>
+                                    <td>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input toggle-status" type="checkbox" 
+                                                   id="status-@item.Id" 
+                                                   data-id="@item.Id" 
+                                                   @(item.IsActive ? "checked" : "")>
+                                            <label class="form-check-label" for="status-@item.Id">
+                                                @(item.IsActive ? "Aktif" : "Nonaktif")
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="EditCameraSetting" asp-route-id="@item.Id" class="btn btn-sm btn-info">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="@item.Id" data-name="@item.ProfileName">
+                                                <i class="fas fa-trash"></i> Hapus
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-camera fa-3x text-muted mb-3"></i>
+                    <h5>Belum ada pengaturan kamera</h5>
+                    <p class="text-muted">Klik tombol "Tambah Pengaturan Kamera" untuk menambahkan pengaturan baru.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus pengaturan kamera "<span id="cameraSettingName"></span>"?</p>
+                <p class="text-danger">Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <form id="deleteForm" asp-action="DeleteCameraSetting" method="post">
+                    <input type="hidden" id="cameraSettingId" name="id" />
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Hapus</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Initialize DataTable
+            $('#cameraSettingsTable').DataTable({
+                language: {
+                    url: '/lib/datatables/id.json'
+                }
+            });
+
+            // Toggle Status
+            $('.toggle-status').on('change', function () {
+                const id = $(this).data('id');
+                const isActive = $(this).prop('checked');
+                const statusLabel = $(this).siblings('label');
+                
+                $.ajax({
+                    url: '@Url.Action("ToggleCameraSettingStatus")',
+                    type: 'POST',
+                    data: { id: id, isActive: isActive },
+                    success: function (response) {
+                        if (response.success) {
+                            statusLabel.text(isActive ? 'Aktif' : 'Nonaktif');
+                            toastr.success('Status berhasil diubah');
+                        } else {
+                            toastr.error(response.message);
+                            // Revert the switch if failed
+                            $('.toggle-status[data-id="' + id + '"]').prop('checked', !isActive);
+                            statusLabel.text(!isActive ? 'Aktif' : 'Nonaktif');
+                        }
+                    },
+                    error: function () {
+                        toastr.error('Terjadi kesalahan saat mengubah status');
+                        // Revert the switch if failed
+                        $('.toggle-status[data-id="' + id + '"]').prop('checked', !isActive);
+                        statusLabel.text(!isActive ? 'Aktif' : 'Nonaktif');
+                    }
+                });
+            });
+
+            // Delete Confirmation
+            $('.delete-btn').on('click', function () {
+                const id = $(this).data('id');
+                const name = $(this).data('name');
+                
+                $('#cameraSettingId').val(id);
+                $('#cameraSettingName').text(name);
+                $('#deleteModal').modal('show');
+            });
+
+            // Form submission for delete
+            $('#deleteForm').on('submit', function (e) {
+                e.preventDefault();
+                
+                const form = $(this);
+                const url = form.attr('action');
+                
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            $('#deleteModal').modal('hide');
+                            toastr.success('Pengaturan kamera berhasil dihapus');
+                            // Remove the row from the table
+                            $('tr[data-id="' + $('#cameraSettingId').val() + '"]').remove();
+                            
+                            // Reload page if no rows left
+                            if ($('#cameraSettingsTable tbody tr').length === 0) {
+                                setTimeout(function() {
+                                    window.location.reload();
+                                }, 1000);
+                            }
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function () {
+                        toastr.error('Terjadi kesalahan saat menghapus pengaturan kamera');
+                    }
+                });
+            });
+        });
+    </script>
+} 

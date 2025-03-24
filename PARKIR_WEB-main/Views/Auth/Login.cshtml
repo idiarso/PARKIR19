@@ -1,0 +1,57 @@
+@model ParkIRC.Controllers.LoginViewModel
+@{
+    ViewData["Title"] = "Log in";
+}
+
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i>Log in</h4>
+                </div>
+                <div class="card-body">
+                    <form id="account" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                        
+                        <div class="form-floating mb-3">
+                            <input asp-for="Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                            <label asp-for="Email">Email</label>
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="form-floating mb-3">
+                            <input asp-for="Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" type="password" />
+                            <label asp-for="Password">Password</label>
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" asp-for="RememberMe" />
+                            <label class="form-check-label" asp-for="RememberMe">
+                                Remember me
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button id="login-submit" type="submit" class="btn btn-primary btn-lg">Log in</button>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <p>
+                                <a asp-action="ForgotPassword">Forgot your password?</a>
+                            </p>
+                            <p>
+                                Don't have an account? <a asp-action="Register">Register</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+} 

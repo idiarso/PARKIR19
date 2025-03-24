@@ -1,0 +1,53 @@
+@model ParkIRC.ViewModels.VehicleExitViewModel
+<div class="modal fade" id="vehicleExitModal" tabindex="-1" role="dialog" aria-labelledby="vehicleExitModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="vehicleExitModalLabel">Catat Kendaraan Keluar</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="vehicleExitForm" onsubmit="return handleVehicleExitSubmit(event)">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="vehicleNumber" class="form-label">Nomor Kendaraan</label>
+                                <input type="text" class="form-control" id="vehicleNumber" name="VehicleNumber" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="paymentMethod" class="form-label">Metode Pembayaran</label>
+                                <select class="form-select" id="paymentMethod" name="PaymentMethod" required>
+                                    <option value="Cash">Tunai</option>
+                                    <option value="Card">Kartu</option>
+                                    <option value="Transfer">Transfer</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="paymentAmount" class="form-label">Nominal Pembayaran</label>
+                                <input type="number" class="form-control" id="paymentAmount" name="PaymentAmount" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="transactionNumber" class="form-label">Nomor Transaksi</label>
+                                <input type="text" class="form-control" id="transactionNumber" name="TransactionNumber" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

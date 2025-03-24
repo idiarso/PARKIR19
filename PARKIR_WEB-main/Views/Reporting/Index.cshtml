@@ -1,0 +1,94 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Laporan";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Laporan Parkir</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Dari Tanggal</label>
+                                <input type="date" class="form-control" id="startDate">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Sampai Tanggal</label>
+                                <input type="date" class="form-control" id="endDate">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Jenis Kendaraan</label>
+                                <select class="form-control" id="vehicleType">
+                                    <option value="">Semua</option>
+                                    <option value="car">Mobil</option>
+                                    <option value="motorcycle">Motor</option>
+                                    <option value="truck">Truk</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-primary" id="generateReport">
+                                <i class="fas fa-file-alt mr-2"></i>Generate Laporan
+                            </button>
+                            <button type="button" class="btn btn-success" id="exportExcel">
+                                <i class="fas fa-file-excel mr-2"></i>Export Excel
+                            </button>
+                            <button type="button" class="btn btn-danger" id="exportPdf">
+                                <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="reportTable">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Tanggal</th>
+                                    <th>Nomor Kendaraan</th>
+                                    <th>Jenis</th>
+                                    <th>Durasi</th>
+                                    <th>Total Biaya</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#generateReport').click(function() {
+                // Add report generation functionality here
+                alert('Generating report...');
+            });
+
+            $('#exportExcel').click(function() {
+                // Add Excel export functionality here
+                alert('Exporting to Excel...');
+            });
+
+            $('#exportPdf').click(function() {
+                // Add PDF export functionality here
+                alert('Exporting to PDF...');
+            });
+        });
+    </script>
+} 

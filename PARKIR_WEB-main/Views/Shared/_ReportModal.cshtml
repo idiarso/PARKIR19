@@ -1,0 +1,130 @@
+<!-- Report Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reportModalLabel">Generate Laporan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reportForm">
+                    <div class="mb-3">
+                        <label for="reportType" class="form-label">Jenis Laporan</label>
+                        <select class="form-select" id="reportType" required>
+                            <option value="">Pilih jenis laporan...</option>
+                            <option value="daily">Laporan Harian</option>
+                            <option value="weekly">Laporan Mingguan</option>
+                            <option value="monthly">Laporan Bulanan</option>
+                            <option value="custom">Laporan Kustom</option>
+                        </select>
+                    </div>
+                    
+                    <div id="dateRangeContainer" class="mb-3 d-none">
+                        <div class="row">
+                            <div class="col">
+                                <label for="startDate" class="form-label">Tanggal Mulai</label>
+                                <input type="date" class="form-control" id="startDate">
+                            </div>
+                            <div class="col">
+                                <label for="endDate" class="form-label">Tanggal Selesai</label>
+                                <input type="date" class="form-control" id="endDate">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="reportFormat" class="form-label">Format Laporan</label>
+                        <select class="form-select" id="reportFormat" required>
+                            <option value="pdf">PDF</option>
+                            <option value="excel">Excel</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" onclick="generateReport()">Generate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('reportType').addEventListener('change', function() {
+    const dateRangeContainer = document.getElementById('dateRangeContainer');
+    if (this.value === 'custom') {
+        dateRangeContainer.classList.remove('d-none');
+    } else {
+        dateRangeContainer.classList.add('d-none');
+    }
+});
+
+function generateReport() {
+    const reportType = document.getElementById('reportType').value;
+    const reportFormat = document.getElementById('reportFormat').value;
+    let startDate = null;
+    let endDate = null;
+
+    if (reportType === 'custom') {
+        startDate = document.getElementById('startDate').value;
+        endDate = document.getElementById('endDate').value;
+        
+        if (!startDate || !endDate) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Silakan pilih tanggal mulai dan selesai'
+            });
+            return;
+        }
+    }
+
+    if (!reportType) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Silakan pilih jenis laporan'
+        });
+        return;
+    }
+
+    const url = `/Parking/GenerateReport?reportType=${reportType}&reportFormat=${reportFormat}${startDate ? `&startDate=${startDate}` : ''}${endDate ? `&endDate=${endDate}` : ''}`;
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            // Create a link to download the file
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `report_${reportType}_${new Date().toISOString().split('T')[0]}.${reportFormat}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: 'Sukses',
+                text: 'Laporan berhasil di-generate'
+            });
+
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
+            modal.hide();
+        })
+        .catch(error => {
+            console.error('Error generating report:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Gagal generate laporan'
+            });
+        });
+}</script> 

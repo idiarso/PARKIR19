@@ -1,0 +1,204 @@
+@{
+    ViewData["Title"] = "Menu Cepat";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-3">Menu Cepat</h2>
+            <p class="text-muted">Akses cepat untuk fungsi yang sering digunakan</p>
+        </div>
+    </div>
+
+    <!-- Stats Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Slot</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="display-4">@ViewBag.TotalSpaces</div>
+                        <div class="ms-auto">
+                            <i class="fas fa-parking fa-3x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Slot Tersedia</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="display-4">@ViewBag.AvailableSpaces</div>
+                        <div class="ms-auto">
+                            <i class="fas fa-check-circle fa-3x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Slot Terisi</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="display-4">@ViewBag.OccupiedSpaces</div>
+                        <div class="ms-auto">
+                            <i class="fas fa-car fa-3x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Pendapatan Hari Ini</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="display-4">Rp @ViewBag.TodayRevenue.ToString("N0")</div>
+                        <div class="ms-auto">
+                            <i class="fas fa-money-bill-wave fa-3x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Access Cards -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3">Manajemen Kendaraan</h3>
+        </div>
+        
+        <!-- Vehicle Entry Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-sign-in-alt fa-5x text-primary"></i>
+                    </div>
+                    <h4 class="card-title">Kendaraan Masuk</h4>
+                    <p class="card-text">Proses kendaraan masuk dan penerbitan tiket parkir</p>
+                    <a href="@Url.Action("Entry", "Gate")" class="btn btn-primary btn-lg btn-block">
+                        <i class="fas fa-sign-in-alt me-2"></i> Kendaraan Masuk
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Vehicle Exit Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-sign-out-alt fa-5x text-danger"></i>
+                    </div>
+                    <h4 class="card-title">Kendaraan Keluar</h4>
+                    <p class="card-text">Proses kendaraan keluar dan pembayaran parkir</p>
+                    <a href="@Url.Action("VehicleExit", "Parking")" class="btn btn-danger btn-lg btn-block">
+                        <i class="fas fa-sign-out-alt me-2"></i> Kendaraan Keluar
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Vehicle History Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-history fa-5x text-info"></i>
+                    </div>
+                    <h4 class="card-title">Riwayat Kendaraan</h4>
+                    <p class="card-text">Lihat riwayat masuk dan keluar kendaraan</p>
+                    <a href="@Url.Action("Index", "History")" class="btn btn-info btn-lg btn-block text-white">
+                        <i class="fas fa-history me-2"></i> Lihat Riwayat
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3">Cetak & Laporan</h3>
+        </div>
+        
+        <!-- Print Ticket Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-print fa-5x text-primary"></i>
+                    </div>
+                    <h4 class="card-title">Cetak Tiket</h4>
+                    <p class="card-text">Cetak ulang tiket parkir untuk kendaraan</p>
+                    <a href="@Url.Action("PrintTicket", "Ticket")" class="btn btn-primary btn-lg btn-block">
+                        <i class="fas fa-print me-2"></i> Cetak Tiket
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Generate Reports Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-chart-bar fa-5x text-success"></i>
+                    </div>
+                    <h4 class="card-title">Laporan</h4>
+                    <p class="card-text">Buat dan unduh laporan transaksi parkir</p>
+                    <a href="@Url.Action("Index", "Reporting")" class="btn btn-success btn-lg btn-block">
+                        <i class="fas fa-file-alt me-2"></i> Buat Laporan
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Live Dashboard Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-tachometer-alt fa-5x text-warning"></i>
+                    </div>
+                    <h4 class="card-title">Dashboard Live</h4>
+                    <p class="card-text">Pantau aktivitas parkir secara real-time</p>
+                    <a href="@Url.Action("Dashboard", "Parking")" class="btn btn-warning btn-lg btn-block text-dark">
+                        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Add hover effects for cards
+            $('.card').hover(
+                function() {
+                    $(this).addClass('shadow-lg').css('cursor', 'pointer');
+                    $(this).find('.btn').addClass('shadow-sm');
+                }, 
+                function() {
+                    $(this).removeClass('shadow-lg');
+                    $(this).find('.btn').removeClass('shadow-sm');
+                }
+            );
+            
+            // Make the entire card clickable
+            $('.card').click(function() {
+                var link = $(this).find('a').attr('href');
+                if(link) {
+                    window.location = link;
+                }
+            });
+        });
+    </script>
+} 

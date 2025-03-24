@@ -1,0 +1,48 @@
+#!/bin/sh
+set -e
+
+# Create service file
+cat > /etc/systemd/system/parkirc.service << EOF
+[Unit]
+Description=ParkIRC Parking Management System
+After=network.target
+
+[Service]
+Type=simple
+User=parkirc
+WorkingDirectory=/usr/local/share/parkirc
+ExecStart=/usr/local/share/parkirc/ParkIRC
+Restart=always
+RestartSec=10
+SyslogIdentifier=parkirc
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Create user if not exists
+if ! id "parkirc" >/dev/null 2>&1; then
+    useradd -r -s /bin/false parkirc
+fi
+
+# Set permissions
+chown -R parkirc:parkirc /usr/local/share/parkirc
+
+# Reload systemd
+systemctl daemon-reload
+
+# Enable and start service
+systemctl enable parkirc
+systemctl start parkirc
+
+# Create desktop entry
+cat > /usr/share/applications/parkirc.desktop << EOF
+[Desktop Entry]
+Name=ParkIRC
+Comment=Parking Management System
+Exec=xdg-open http://localhost:5126
+Icon=/usr/local/share/parkirc/wwwroot/favicon.ico
+Terminal=false
+Type=Application
+Categories=Office;
+EOF 

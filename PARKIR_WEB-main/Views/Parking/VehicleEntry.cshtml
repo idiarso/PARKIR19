@@ -1,0 +1,474 @@
+@using ParkIRC.Models
+@model VehicleEntryModel
+@{
+    ViewData["Title"] = "Kendaraan Masuk";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Camera Feed and Controls -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-camera me-2"></i>Kamera ANPR</h6>
+                </div>
+                <div class="card-body">
+                    <div class="video-container mb-3" style="min-height: 300px; background-color: #f8f9fc; border: 1px solid #e3e6f0;">
+                        <video id="videoFeed" style="width: 100%; height: 300px; object-fit: cover;" autoplay playsinline></video>
+                        <canvas id="captureCanvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="camera-controls d-flex gap-2">
+                        <button id="startCamera" class="btn btn-primary">
+                            <i class="fas fa-video me-2"></i>Mulai Kamera
+                        </button>
+                        <button id="captureImage" class="btn btn-success" disabled>
+                            <i class="fas fa-camera me-2"></i>Ambil Gambar
+                        </button>
+                        <button id="stopCamera" class="btn btn-danger" disabled>
+                            <i class="fas fa-video-slash me-2"></i>Stop Kamera
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANPR Results -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-search me-2"></i>Hasil Deteksi ANPR</h6>
+                </div>
+                <div class="card-body">
+                    <div id="anprResult" class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>Menunggu deteksi plat nomor...
+                    </div>
+                    <div id="detectedPlate" class="d-none">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <h4 class="mb-0 text-success" id="plateNumber"></h4>
+                            <button id="usePlate" class="btn btn-sm btn-success">
+                                <i class="fas fa-check me-1"></i>Gunakan
+                            </button>
+                        </div>
+                        <small class="text-muted">Klik "Gunakan" untuk mengisi nomor kendaraan otomatis</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vehicle Details Form -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-car me-2"></i>Detail Kendaraan</h6>
+                </div>
+                <div class="card-body">
+                    <form id="vehicleEntryForm">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label for="vehicleType" class="form-label">Jenis Kendaraan</label>
+                            <select class="form-control" id="vehicleType" name="vehicleType" required>
+                                <option value="">Pilih Jenis Kendaraan</option>
+                                <option value="car">Mobil</option>
+                                <option value="motorcycle">Motor</option>
+                                <option value="truck">Truk</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="vehicleNumber" class="form-label">Nomor Kendaraan</label>
+                            <input type="text" class="form-control" id="vehicleNumber" name="vehicleNumber" required 
+                                   placeholder="Contoh: B 1234 ABC"
+                                   pattern="^[A-Z]{1,2}\s\d{1,4}\s[A-Z]{1,3}$"
+                                   title="Format: [1-2 Huruf] [1-4 Angka] [1-3 Huruf], contoh: B 1234 ABC"/>
+                            <small class="text-muted">Format: [Huruf] [Angka] [Huruf], contoh: B 1234 ABC</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="driverName" class="form-label">Nama Pengemudi (Opsional)</label>
+                            <input type="text" class="form-control" id="driverName" name="driverName" />
+                        </div>
+                        <div class="mb-3">
+                            <label for="contactNumber" class="form-label">Nomor Kontak (Opsional)</label>
+                            <input type="tel" class="form-control" id="contactNumber" name="contactNumber" />
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Simpan
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Parking Slots -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-th me-2"></i>Slot Parkir Tersedia</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <div class="card border-left-primary h-100">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Mobil</div>
+                                            <div class="h5 mb-0 font-weight-bold" id="availableCarSpaces">Loading...</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-car fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card border-left-success h-100">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Motor</div>
+                                            <div class="h5 mb-0 font-weight-bold" id="availableMotorcycleSpaces">Loading...</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-motorcycle fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card border-left-warning h-100">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Truk</div>
+                                            <div class="h5 mb-0 font-weight-bold" id="availableTruckSpaces">Loading...</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-truck fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let videoStream;
+        const videoElement = document.getElementById('videoFeed');
+        const canvas = document.getElementById('captureCanvas');
+        const startButton = document.getElementById('startCamera');
+        const captureButton = document.getElementById('captureImage');
+        const stopButton = document.getElementById('stopCamera');
+        const anprResult = document.getElementById('anprResult');
+        const detectedPlate = document.getElementById('detectedPlate');
+        const plateNumberElement = document.getElementById('plateNumber');
+        const usePlateButton = document.getElementById('usePlate');
+        const vehicleNumberInput = document.getElementById('vehicleNumber');
+        const vehicleEntryForm = document.getElementById('vehicleEntryForm');
+
+        // Camera Controls
+        startButton.addEventListener('click', async () => {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoElement.srcObject = videoStream;
+                startButton.disabled = true;
+                captureButton.disabled = false;
+                stopButton.disabled = false;
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                anprResult.className = 'alert alert-danger';
+                anprResult.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Error accessing camera. Please check permissions.';
+            }
+        });
+
+        stopButton.addEventListener('click', () => {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoElement.srcObject = null;
+                startButton.disabled = false;
+                captureButton.disabled = true;
+                stopButton.disabled = true;
+            }
+        });
+
+        // ANPR Detection Simulation
+        captureButton.addEventListener('click', async () => {
+            const context = canvas.getContext('2d');
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+            
+            // Always save the captured image
+            const capturedImage = canvas.toDataURL('image/jpeg');
+            document.getElementById('capturedImage').src = capturedImage;
+            document.getElementById('capturedImageContainer').classList.remove('d-none');
+            
+            // Show processing message
+            anprResult.className = 'alert alert-info';
+            anprResult.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses gambar...';
+            
+            try {
+                // Try to detect the plate number
+                const response = await fetch('/Parking/DetectPlateNumber', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ imageData: capturedImage })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.plateNumber) {
+                    anprResult.className = 'alert alert-success';
+                    anprResult.innerHTML = '<i class="fas fa-check-circle me-2"></i>Plat nomor terdeteksi';
+                    detectedPlate.classList.remove('d-none');
+                    plateNumberElement.textContent = result.plateNumber;
+                    vehicleNumberInput.value = result.plateNumber;
+                } else {
+                    anprResult.className = 'alert alert-warning';
+                    anprResult.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Gagal mendeteksi plat nomor. Silakan masukkan secara manual.';
+                    detectedPlate.classList.add('d-none');
+                }
+            } catch (error) {
+                console.error('Error processing image:', error);
+                anprResult.className = 'alert alert-warning';
+                anprResult.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Gagal memproses gambar. Silakan masukkan nomor plat secara manual.';
+                detectedPlate.classList.add('d-none');
+            }
+        });
+
+        // Use detected plate number
+        usePlateButton.addEventListener('click', () => {
+            vehicleNumberInput.value = plateNumberElement.textContent;
+        });
+
+        // Form submission
+        vehicleEntryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Get antiforgery token
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            if (!token) {
+                console.error('Antiforgery token not found');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'Security token missing. Please refresh the page and try again.'
+                });
+                return;
+            }
+            
+            // Validate form inputs
+            const vehicleType = document.getElementById('vehicleType');
+            const vehicleNumber = document.getElementById('vehicleNumber');
+
+            // Reset previous error states
+            [vehicleType, vehicleNumber].forEach(input => {
+                input.classList.remove('is-invalid');
+                const feedback = input.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.remove();
+                }
+            });
+
+            let hasError = false;
+
+            // Enhanced validation
+            if (!vehicleType.value) {
+                showFieldError(vehicleType, 'Jenis kendaraan wajib dipilih');
+                hasError = true;
+            }
+
+            const vehicleNumberRegex = /^[A-Z]{1,2}\s\d{1,4}\s[A-Z]{1,3}$/;
+            if (!vehicleNumber.value || !vehicleNumberRegex.test(vehicleNumber.value.toUpperCase())) {
+                showFieldError(vehicleNumber, 'Format nomor kendaraan tidak valid. Contoh: B 1234 ABC');
+                hasError = true;
+            }
+
+            if (hasError) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validasi Error',
+                    text: 'Mohon periksa kembali data yang diinput'
+                });
+                return;
+            }
+
+            const submitButton = vehicleEntryForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
+
+            try {
+                // Prepare form data
+                const formData = {
+                    vehicleType: vehicleType.value,
+                    vehicleNumber: vehicleNumber.value.toUpperCase(),
+                    driverName: document.getElementById('driverName').value.trim() || null,
+                    contactNumber: document.getElementById('contactNumber').value.trim() || null
+                };
+
+                console.log('Submitting form data:', formData);
+
+                const response = await fetch('/Parking/RecordEntry', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                console.log('Response status:', response.status);
+                let result;
+                try {
+                    result = await response.json();
+                    console.log('Response data:', result);
+                } catch (jsonError) {
+                    console.error('Failed to parse JSON response:', jsonError);
+                    throw new Error('Invalid server response format');
+                }
+
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: result.message || 'Data kendaraan berhasil disimpan.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        vehicleEntryForm.reset();
+                        detectedPlate.classList.add('d-none');
+                        anprResult.className = 'alert alert-info';
+                        anprResult.innerHTML = '<i class="fas fa-info-circle me-2"></i>Menunggu deteksi plat nomor...';
+                        updateAvailableSpaces();
+                    });
+
+                    // Notify using SignalR if connected
+                    if (connection && connection.state === signalR.HubConnectionState.Connected) {
+                        try {
+                            await connection.invoke("NotifyVehicleEntry", formData.vehicleNumber);
+                        } catch (err) {
+                            console.error('SignalR notification error:', err);
+                        }
+                    }
+                } else {
+                    let errorMessage = 'Gagal menyimpan data kendaraan.';
+                    
+                    if (result && result.error) {
+                        errorMessage = result.error;
+                    } else if (result && result.errors) {
+                        const errorMessages = [];
+                        Object.entries(result.errors).forEach(([field, errors]) => {
+                            const input = document.getElementById(field.toLowerCase());
+                            if (input && errors && errors.length > 0) {
+                                showFieldError(input, errors[0]);
+                                errorMessages.push(errors[0]);
+                            }
+                        });
+                        if (errorMessages.length > 0) {
+                            errorMessage = errorMessages.join('\n');
+                        }
+                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: errorMessage,
+                        confirmButtonText: 'Tutup'
+                    });
+                }
+            } catch (error) {
+                console.error('Error during submission:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'Gagal menyimpan data kendaraan. Silakan coba lagi.',
+                    confirmButtonText: 'Tutup'
+                });
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-save me-2"></i>Simpan';
+            }
+        });
+
+        function showFieldError(input, message) {
+            input.classList.add('is-invalid');
+            const existingFeedback = input.nextElementSibling;
+            if (existingFeedback?.classList.contains('invalid-feedback')) {
+                existingFeedback.remove();
+            }
+            input.insertAdjacentHTML('afterend', `<div class="invalid-feedback">${message}</div>`);
+        }
+
+        // Auto-format vehicle number as uppercase and check availability
+        vehicleNumberInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        vehicleNumberInput.addEventListener('blur', async () => {
+            const value = vehicleNumberInput.value.trim();
+            if (!value) return;
+            
+            const vehicleNumberRegex = /^[A-Z]{1,2}\s\d{1,4}\s[A-Z]{1,3}$/;
+            if (!vehicleNumberRegex.test(value)) {
+                showFieldError(vehicleNumberInput, 'Format nomor kendaraan tidak valid. Contoh: B 1234 ABC');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/Parking/CheckVehicleAvailability?vehicleNumber=${encodeURIComponent(value)}`);
+                const result = await response.json();
+                
+                if (!result.isAvailable) {
+                    showFieldError(vehicleNumberInput, result.message);
+                } else {
+                    vehicleNumberInput.classList.remove('is-invalid');
+                    const feedback = vehicleNumberInput.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.remove();
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking vehicle availability:', error);
+            }
+        });
+
+        // Update available spaces
+        async function updateAvailableSpaces() {
+            try {
+                const response = await fetch('/Parking/GetAvailableSpaces');
+                const spaces = await response.json();
+                
+                document.getElementById('availableCarSpaces').textContent = spaces.car + ' Slot';
+                document.getElementById('availableMotorcycleSpaces').textContent = spaces.motorcycle + ' Slot';
+                document.getElementById('availableTruckSpaces').textContent = spaces.truck + ' Slot';
+            } catch (error) {
+                console.error('Error fetching available spaces:', error);
+            }
+        }
+
+        // Initial load
+        updateAvailableSpaces();
+
+        // SignalR connection for real-time updates
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/parkingHub")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.start().catch(err => console.error(err));
+
+        // Listen for space updates
+        connection.on("SpaceAvailabilityChanged", () => {
+            updateAvailableSpaces();
+        });
+    </script>
+}

@@ -1,0 +1,135 @@
+@{
+    ViewData["Title"] = "Vehicle Exit";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-camera me-2"></i>Live Scanner
+                    </h6>
+                    <div class="d-flex align-items-center">
+                        <div class="form-check form-switch me-3">
+                            <input class="form-check-input" type="checkbox" id="autoProcessSwitch" checked>
+                            <label class="form-check-label" for="autoProcessSwitch">Auto Process</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Live Camera Preview -->
+                    <div id="interactive" class="viewport mb-3">
+                        <video id="previewCamera" style="width: 100%; max-width: 640px;"></video>
+                        <canvas id="previewCanvas" class="drawingBuffer" style="display:none;"></canvas>
+                    </div>
+                    
+                    <!-- Scanner Controls -->
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        <button class="btn btn-primary" id="startButton">
+                            <i class="fas fa-play me-2"></i>Mulai Scan
+                        </button>
+                        <button class="btn btn-danger" id="stopButton" style="display:none">
+                            <i class="fas fa-stop me-2"></i>Stop Scan
+                        </button>
+                        <button class="btn btn-secondary" id="switchCamera">
+                            <i class="fas fa-sync me-2"></i>Ganti Kamera
+                        </button>
+                    </div>
+
+                    <!-- Scan Status -->
+                    <div class="alert alert-info" id="scanStatus" style="display:none">
+                        <i class="fas fa-spinner fa-spin me-2"></i>
+                        <span id="scanStatusText">Menunggu barcode...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Vehicle Exit Form</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="vehicleNumber" class="form-label">Vehicle Number</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="vehicleNumber" name="vehicleNumber" required>
+                            <button class="btn btn-primary" type="button" id="searchVehicle">
+                                <i class="fas fa-search"></i> Search Vehicle
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Parking Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Entry Time:</strong></p>
+                                    <p id="entryTime">--:--</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Duration:</strong></p>
+                                    <p id="duration">-- hrs -- mins</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Rate:</strong></p>
+                                    <p id="rate">$--/hr</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Total Amount:</strong></p>
+                                    <p id="totalAmount">$--</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-primary" id="processExit">
+                            <i class="fas fa-check me-2"></i>Process Exit
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="clear">
+                            <i class="fas fa-redo me-2"></i>Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Exits</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="recentExitsTable">
+                            <thead>
+                                <tr>
+                                    <th>Exit Time</th>
+                                    <th>Vehicle Number</th>
+                                    <th>Duration</th>
+                                    <th>Amount Paid</th>
+                                    <th>Payment Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentExitsBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="~/js/vehicleExit.js"></script>
+}

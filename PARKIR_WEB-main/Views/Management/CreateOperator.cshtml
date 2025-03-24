@@ -1,0 +1,106 @@
+@model ParkIRC.ViewModels.CreateOperatorViewModel
+
+@{
+    ViewData["Title"] = "Tambah Operator Baru";
+}
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-user-plus me-2"></i>Tambah Operator Baru
+            </h6>
+        </div>
+        <div class="card-body">
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            
+            <form asp-action="CreateOperator" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="Operator.FullName" class="control-label">Nama Lengkap</label>
+                            <input asp-for="Operator.FullName" class="form-control" />
+                            <span asp-validation-for="Operator.FullName" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="Operator.BadgeNumber" class="control-label">Nomor Badge</label>
+                            <input asp-for="Operator.BadgeNumber" class="form-control" />
+                            <span asp-validation-for="Operator.BadgeNumber" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="Operator.Email" class="control-label">Email</label>
+                            <input asp-for="Operator.Email" class="form-control" type="email" />
+                            <span asp-validation-for="Operator.Email" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="Operator.PhoneNumber" class="control-label">Nomor Telepon</label>
+                            <input asp-for="Operator.PhoneNumber" class="form-control" />
+                            <span asp-validation-for="Operator.PhoneNumber" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="Operator.JoinDate" class="control-label">Tanggal Bergabung</label>
+                            <input asp-for="Operator.JoinDate" class="form-control" type="date" />
+                            <span asp-validation-for="Operator.JoinDate" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="SelectedRole" class="control-label">Role</label>
+                            <select asp-for="SelectedRole" asp-items="Model.AvailableRoles" class="form-select"></select>
+                            <span asp-validation-for="SelectedRole" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="Operator.IsActive" class="control-label">Status</label>
+                            <div class="form-check mt-2">
+                                <input asp-for="Operator.IsActive" class="form-check-input" />
+                                <label class="form-check-label" for="Operator_IsActive">Aktif</label>
+                            </div>
+                            <span asp-validation-for="Operator.IsActive" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-2"></i> Password sementara akan diberikan setelah operator dibuat. Password dapat diganti pada halaman profil.
+                </div>
+
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Simpan
+                    </button>
+                    <a asp-action="Operators" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Kembali
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+} 

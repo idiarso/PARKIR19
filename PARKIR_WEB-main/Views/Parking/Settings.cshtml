@@ -1,0 +1,425 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Pengaturan Sistem";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Data Management Section -->
+        <div class="col-lg-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-database me-2"></i>Manajemen Data
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Backup & Restore -->
+                        <div class="col-md-8">
+                            <h5 class="mb-3">Backup & Restore Data</h5>
+                            <!-- Backup Section -->
+                            <div class="mb-4">
+                                <form id="backupForm" method="post" action="@Url.Action("BackupData", "Parking")">
+                                    @Html.AntiForgeryToken()
+                                    <div class="mb-3">
+                                        <label class="form-label">Periode Backup</label>
+                                        <select class="form-select" name="backupPeriod" id="backupPeriod">
+                                            <option value="daily">Harian</option>
+                                            <option value="monthly">Bulanan</option>
+                                            <option value="custom">Kustom</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div id="customDateRange" class="mb-3" style="display:none;">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Tanggal Mulai</label>
+                                                <input type="date" class="form-control" name="startDate" id="startDate">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Tanggal Akhir</label>
+                                                <input type="date" class="form-control" name="endDate" id="endDate">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="includeImages" id="includeImages" checked>
+                                            <label class="form-check-label" for="includeImages">
+                                                Sertakan Foto Kendaraan
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-download me-2"></i>Download Backup
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Restore Section -->
+                            <div class="mb-4">
+                                <h5 class="mb-3">Restore Data</h5>
+                                <form id="restoreForm" method="post" action="@Url.Action("RestoreData", "Parking")" enctype="multipart/form-data">
+                                    @Html.AntiForgeryToken()
+                                    <div class="mb-3">
+                                        <label class="form-label">File Backup (.zip)</label>
+                                        <input type="file" class="form-control" name="backupFile" id="backupFile" accept=".zip" required>
+                                        <div class="form-text">Pilih file backup yang akan direstore</div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="overwriteExisting" id="overwriteExisting">
+                                            <label class="form-check-label" for="overwriteExisting">
+                                                Timpa Data yang Ada
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="fas fa-upload me-2"></i>Restore Data
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Clear Data -->
+                        <div class="col-md-4">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Hapus Data</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="clearDataForm">
+                                        @Html.AntiForgeryToken()
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Pilih Data yang Akan Dihapus:</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="clearOptions[]" value="transactions" id="clearTransactions">
+                                                <label class="form-check-label" for="clearTransactions">
+                                                    Transaksi Parkir
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="clearOptions[]" value="vehicles" id="clearVehicles">
+                                                <label class="form-check-label" for="clearVehicles">
+                                                    Data Kendaraan
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="clearOptions[]" value="tickets" id="clearTickets">
+                                                <label class="form-check-label" for="clearTickets">
+                                                    Tiket Parkir
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="clearOptions[]" value="images" id="clearImages">
+                                                <label class="form-check-label" for="clearImages">
+                                                    File Gambar (Foto Kendaraan & Barcode)
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="clearPeriod" class="form-label">Periode Data:</label>
+                                            <select class="form-select" id="clearPeriod" name="clearPeriod" required>
+                                                <option value="">Pilih Periode</option>
+                                                <option value="all">Semua Data</option>
+                                                <option value="older_than_month">Data > 1 Bulan</option>
+                                                <option value="older_than_3months">Data > 3 Bulan</option>
+                                                <option value="older_than_6months">Data > 6 Bulan</option>
+                                                <option value="older_than_year">Data > 1 Tahun</option>
+                                                <option value="custom">Periode Kustom</option>
+                                            </select>
+                                        </div>
+
+                                        <div id="customDateGroup" class="mb-3 d-none">
+                                            <label for="clearBeforeDate" class="form-label">Hapus Data Sebelum Tanggal:</label>
+                                            <input type="date" class="form-control" id="clearBeforeDate" name="clearBeforeDate">
+                                        </div>
+
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <strong>Peringatan:</strong> Data yang dihapus tidak dapat dikembalikan. Pastikan Anda telah membuat backup sebelum melanjutkan.
+                                        </div>
+
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fas fa-trash-alt me-2"></i>
+                                            Hapus Data
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other Settings -->
+        <div class="col-lg-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-cog me-2"></i>Pengaturan Umum
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Nama Lokasi Parkir</label>
+                                <input type="text" class="form-control" id="parkingLocationName" value="@ViewBag.ParkingLocationName">
+                            </div>
+                            <div class="form-group">
+                                <label>Alamat</label>
+                                <textarea class="form-control" id="address" rows="3">@ViewBag.Address</textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Kontak Telepon</label>
+                                <input type="text" class="form-control" id="phoneNumber" value="@ViewBag.PhoneNumber">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" class="form-control" id="email" value="@ViewBag.Email">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-primary" id="saveSettings">Simpan Pengaturan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle backup period change
+            $('#backupPeriod').change(function() {
+                if ($(this).val() === 'custom') {
+                    $('#customDateRange').slideDown();
+                } else {
+                    $('#customDateRange').slideUp();
+                }
+            });
+
+            // Handle backup form submission
+            $('#backupForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const period = $('#backupPeriod').val();
+                if (period === 'custom') {
+                    const startDate = $('#startDate').val();
+                    const endDate = $('#endDate').val();
+                    
+                    if (!startDate || !endDate) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Pilih tanggal mulai dan akhir untuk backup kustom'
+                        });
+                        return;
+                    }
+                    
+                    if (new Date(startDate) > new Date(endDate)) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Tanggal mulai harus lebih awal dari tanggal akhir'
+                        });
+                        return;
+                    }
+                }
+
+                // Show loading
+                Swal.fire({
+                    title: 'Memproses Backup...',
+                    html: 'Mohon tunggu...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Submit form
+                const formData = new FormData(this);
+                
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.blob())
+                .then(blob => {
+                    // Create download link
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `backup_${new Date().toISOString().split('T')[0]}.zip`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'Backup data berhasil diunduh',
+                        timer: 1500
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Gagal melakukan backup data'
+                    });
+                });
+            });
+
+            // Handle restore form submission
+            $('#restoreForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                Swal.fire({
+                    title: 'Konfirmasi Restore',
+                    text: 'Anda yakin ingin melakukan restore data?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Restore',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Show loading
+                        Swal.fire({
+                            title: 'Memproses Restore...',
+                            html: 'Mohon tunggu...',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        // Submit form
+                        const formData = new FormData(this);
+                        
+                        fetch(this.action, {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil',
+                                    text: 'Data berhasil direstore',
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                throw new Error(data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: error.message || 'Gagal melakukan restore data'
+                            });
+                        });
+                    }
+                });
+            });
+
+            // Handle clear period change
+            $('#clearPeriod').change(function() {
+                if ($(this).val() === 'custom') {
+                    $('#customDateGroup').slideDown();
+                } else {
+                    $('#customDateGroup').slideUp();
+                }
+            });
+
+            // Handle clear data form submission
+            $('#clearDataForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const selectedOptions = $('input[name="clearOptions[]"]:checked').length;
+                if (selectedOptions === 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Pilih minimal satu jenis data yang akan dihapus'
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Konfirmasi Penghapusan Data',
+                    text: 'Data yang dihapus tidak dapat dikembalikan! Pastikan Anda telah melakukan backup jika diperlukan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Hapus Data',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#dc3545'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Show loading
+                        Swal.fire({
+                            title: 'Menghapus Data...',
+                            html: 'Mohon tunggu...',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        // Submit form
+                        const formData = new FormData(this);
+                        
+                        fetch(this.action, {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil',
+                                    text: data.message,
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                throw new Error(data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: error.message || 'Gagal menghapus data'
+                            });
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+} 

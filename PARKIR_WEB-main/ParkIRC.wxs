@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="*" 
+             Name="ParkIRC Parking Management System" 
+             Language="1033" 
+             Version="1.0.0.0" 
+             Manufacturer="ParkIRC" 
+             UpgradeCode="12345678-1234-1234-1234-123456789012">
+        
+        <Package InstallerVersion="200" 
+                 Compressed="yes" 
+                 InstallScope="perMachine" 
+                 Platform="x64"/>
+
+        <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+        <MediaTemplate EmbedCab="yes"/>
+
+        <Feature Id="ProductFeature" Title="ParkIRC" Level="1">
+            <ComponentGroupRef Id="ProductComponents" />
+            <ComponentGroupRef Id="ProductResources" />
+        </Feature>
+
+        <!-- Step 1: Define the directory structure -->
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFiles64Folder">
+                <Directory Id="INSTALLFOLDER" Name="ParkIRC">
+                    <Directory Id="RESOURCESFOLDER" Name="Resources"/>
+                    <Directory Id="WWWROOTFOLDER" Name="wwwroot"/>
+                </Directory>
+            </Directory>
+            <Directory Id="ProgramMenuFolder">
+                <Directory Id="ApplicationProgramsFolder" Name="ParkIRC"/>
+            </Directory>
+            <Directory Id="DesktopFolder" Name="Desktop" />
+        </Directory>
+
+        <!-- Step 2: Add files to your installer -->
+        <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+            <Component Id="ProductComponent" Guid="*" Win64="yes">
+                <File Id="ParkIRCEXE" 
+                      Name="ParkIRC.exe" 
+                      Source="$(var.BinDir)\ParkIRC.exe" 
+                      KeyPath="yes">
+                    <Shortcut Id="StartMenuShortcut" 
+                              Directory="ApplicationProgramsFolder"
+                              Name="ParkIRC"
+                              WorkingDirectory="INSTALLFOLDER"
+                              Icon="ParkIRC.ico"
+                              IconIndex="0"
+                              Advertise="yes" />
+                    <Shortcut Id="DesktopShortcut"
+                              Directory="DesktopFolder"
+                              Name="ParkIRC"
+                              WorkingDirectory="INSTALLFOLDER"
+                              Icon="ParkIRC.ico"
+                              IconIndex="0"
+                              Advertise="yes" />
+                </File>
+                <File Id="ParkIRCDLL" 
+                      Name="ParkIRC.dll" 
+                      Source="$(var.BinDir)\ParkIRC.dll" />
+                <File Id="StartBat" 
+                      Name="start.bat" 
+                      Source="$(var.BinDir)\start.bat" />
+                <File Id="ConfigFile" 
+                      Name="appsettings.json" 
+                      Source="$(var.BinDir)\appsettings.json" />
+                <File Id="ConfigDevFile" 
+                      Name="appsettings.Development.json" 
+                      Source="$(var.BinDir)\appsettings.Development.json" />
+                <File Id="NLogConfig" 
+                      Name="nlog.config" 
+                      Source="$(var.BinDir)\nlog.config" />
+                <File Id="WebConfig" 
+                      Name="web.config" 
+                      Source="$(var.BinDir)\web.config" />
+                <File Id="DepsJson" 
+                      Name="ParkIRC.deps.json" 
+                      Source="$(var.BinDir)\ParkIRC.deps.json" />
+                <File Id="RuntimeConfig" 
+                      Name="ParkIRC.runtimeconfig.json" 
+                      Source="$(var.BinDir)\ParkIRC.runtimeconfig.json" />
+                <RemoveFolder Id="CleanupShortcut" 
+                            Directory="ApplicationProgramsFolder" 
+                            On="uninstall" />
+            </Component>
+            
+            <!-- Add all DLL files -->
+            <Component Id="DLLFiles" Guid="*" Win64="yes">
+                <File Id="NLogDLL" Source="$(var.BinDir)\NLog.dll" />
+                <File Id="NLogWebDLL" Source="$(var.BinDir)\NLog.Web.AspNetCore.dll" />
+                <File Id="NLogExtDLL" Source="$(var.BinDir)\NLog.Extensions.Logging.dll" />
+                <File Id="QRCoderDLL" Source="$(var.BinDir)\QRCoder.dll" />
+                <!-- Add other DLL files as needed -->
+            </Component>
+        </ComponentGroup>
+
+        <!-- Step 3: Add resources (wwwroot, database, etc) -->
+        <ComponentGroup Id="ProductResources" Directory="RESOURCESFOLDER">
+            <Component Id="DatabaseComponent" Guid="*" Win64="yes">
+                <File Id="DatabaseFile" 
+                      Name="GeexParking.db" 
+                      Source="$(var.BinDir)\GeexParking.db" 
+                      KeyPath="yes" />
+            </Component>
+            
+            <!-- Add wwwroot folder -->
+            <Component Id="WWWRoot" Guid="*" Win64="yes">
+                <CreateFolder Directory="WWWROOTFOLDER" />
+                <!-- Copy all files from wwwroot -->
+            </Component>
+        </ComponentGroup>
+
+        <!-- Step 4: Add the icon -->
+        <Icon Id="ParkIRC.ico" SourceFile="$(var.ProjectDir)\wwwroot\favicon.ico"/>
+        <Property Id="ARPPRODUCTICON" Value="ParkIRC.ico" />
+
+        <!-- Step 5: Custom actions (if needed) -->
+        <CustomAction Id="LaunchApplication" 
+                     FileKey="StartBat" 
+                     ExeCommand="" 
+                     Return="asyncNoWait"/>
+
+        <!-- Step 6: Install Sequence -->
+        <InstallExecuteSequence>
+            <Custom Action="LaunchApplication" After="InstallFinalize">NOT Installed</Custom>
+        </InstallExecuteSequence>
+
+    </Product>
+</Wix> 

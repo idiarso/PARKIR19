@@ -1,0 +1,137 @@
+@model dynamic
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Vehicle Type Statistics</h4>
+                    <div class="card-tools">
+                        <div class="input-group">
+                            <input type="date" id="startDate" class="form-control" onchange="updateReport()" />
+                            <input type="date" id="endDate" class="form-control ml-2" onchange="updateReport()" />
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <canvas id="vehicleTypeChart"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Vehicle Type</th>
+                                        <th>Count</th>
+                                        <th>Total Revenue</th>
+                                        <th>Average Stay Duration (Hours)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var stat in Model)
+                                    {
+                                        <tr>
+                                            <td>@stat.VehicleType</td>
+                                            <td>@stat.Count</td>
+                                            <td>$@stat.TotalRevenue.ToString("N2")</td>
+                                            <td>@stat.AverageStayDuration.ToString("N1")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const statsData = @Html.Raw(Json.Serialize(Model));
+
+        // Vehicle Type Distribution Chart
+        new Chart(document.getElementById('vehicleTypeChart').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: statsData.map(d => d.VehicleType),
+                datasets: [{
+                    data: statsData.map(d => d.Count),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Vehicle Type Distribution'
+                    }
+                }
+            }
+        });
+
+        // Revenue by Vehicle Type Chart
+        new Chart(document.getElementById('revenueChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: statsData.map(d => d.VehicleType),
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: statsData.map(d => d.TotalRevenue),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Revenue by Vehicle Type'
+                    }
+                }
+            }
+        });
+
+        function updateReport() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            window.location.href = `/Reporting/VehicleTypeStatistics?startDate=${startDate}&endDate=${endDate}`;
+        }
+
+        // Set initial dates
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        
+        document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+        document.getElementById('endDate').value = today.toISOString().split('T')[0];
+    </script>
+}

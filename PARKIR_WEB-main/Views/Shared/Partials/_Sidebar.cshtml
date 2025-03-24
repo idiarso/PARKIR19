@@ -1,0 +1,146 @@
+﻿@*
+    ParkIRC - Parking Management System
+*@
+@{
+}
+
+<div class="geex-sidebar" style="display: none;">
+    <a href="#" class="geex-sidebar__close">
+        <i class="uil uil-times"></i>
+    </a>
+    <div class="geex-sidebar__wrapper">
+        <div class="geex-sidebar__header">
+            <a href="@Url.Action("Dashboard","Parking")" class="geex-sidebar__logo">
+                <img class="logo-lite" src="~/img/logo-dark.svg" alt="logo" />
+                <img class="logo-dark" src="~/img/logo-lite.svg" alt="logo" />
+            </a>
+        </div>
+        <nav class="geex-sidebar__menu-wrapper">
+            <ul class="geex-sidebar__menu">
+                <!-- Dashboard -->
+                <li class="geex-sidebar__menu__item">
+                    <a href="@Url.Action("Dashboard","Parking")" class="geex-sidebar__menu__link">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+
+                <!-- Kendaraan -->
+                <li class="geex-sidebar__menu__item has-children">
+                    <a href="#" class="geex-sidebar__menu__link">
+                        <i class="fas fa-car"></i>
+                        <span>Kendaraan</span>
+                    </a>
+                    <ul class="geex-sidebar__submenu">
+                        <li class="geex-sidebar__menu__item">
+                            <a href="@Url.Action("Entry","Gate")" class="geex-sidebar__menu__link">
+                                <i class="fas fa-sign-in-alt"></i>
+                                <span>Kendaraan Masuk</span>
+                            </a>
+                        </li>
+                        <li class="geex-sidebar__menu__item">
+                            <a href="@Url.Action("VehicleExit","Parking")" class="geex-sidebar__menu__link">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Kendaraan Keluar</span>
+                            </a>
+                        </li>
+                        <li class="geex-sidebar__menu__item">
+                            <a href="@Url.Action("LiveDashboard","Parking")" class="geex-sidebar__menu__link">
+                                <i class="fas fa-video"></i>
+                                <span>Monitor Langsung</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Manajemen -->
+                <li class="geex-sidebar__menu__item has-children">
+                    <a href="#" class="geex-sidebar__menu__link">
+                        <i class="fas fa-cogs"></i>
+                        <span>Manajemen</span>
+                    </a>
+                    <ul class="geex-sidebar__submenu">
+                        <li class="geex-sidebar__menu__item">
+                            <a href="@Url.Action("ParkingSlots","Management")" class="geex-sidebar__menu__link">
+                                <i class="fas fa-th"></i>
+                                <span>Kelola Slot</span>
+                            </a>
+                        </li>
+                        <li class="geex-sidebar__menu__item">
+                            <a href="@Url.Action("Operators","Management")" class="geex-sidebar__menu__link">
+                                <i class="fas fa-users"></i>
+                                <span>Kelola Operator</span>
+                            </a>
+                        </li>
+                        <li class="geex-sidebar__menu__item">
+                            <a href="@Url.Action("Shifts","Management")" class="geex-sidebar__menu__link">
+                                <i class="fas fa-clock"></i>
+                                <span>Kelola Shift</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Laporan -->
+                <li class="geex-sidebar__menu__item has-children">
+                    <a href="#" class="geex-sidebar__menu__link">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Laporan</span>
+                    </a>
+                    <ul class="geex-sidebar__submenu">
+                        <li class="geex-sidebar__menu__item">
+                            <a href="@Url.Action("Daily","Reports")" class="geex-sidebar__menu__link">
+                                <i class="fas fa-calendar-day"></i>
+                                <span>Laporan Harian</span>
+                            </a>
+                        </li>
+                        <li class="geex-sidebar__menu__item">
+                            <a href="@Url.Action("Monthly","Reports")" class="geex-sidebar__menu__link">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Laporan Bulanan</span>
+                            </a>
+                        </li>
+                        <li class="geex-sidebar__menu__item">
+                            <a href="@Url.Action("Custom","Reports")" class="geex-sidebar__menu__link">
+                                <i class="fas fa-calendar-check"></i>
+                                <span>Laporan Kustom</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Pengaturan -->
+                <li class="geex-sidebar__menu__item has-children">
+                    <a href="#" class="geex-sidebar__menu__link">
+                        <i class="fas fa-wrench"></i>
+                        <span>Pengaturan</span>
+                    </a>
+                    <ul class="geex-sidebar__submenu">
+                        <li class="geex-sidebar__menu__item">
+                            <a href="@Url.Action("Index","Rates")" class="geex-sidebar__menu__link">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>Tarif Parkir</span>
+                            </a>
+                        </li>
+                        <li class="geex-sidebar__menu__item">
+                            <a href="@Url.Action("Backup","Settings")" class="geex-sidebar__menu__link">
+                                <i class="fas fa-database"></i>
+                                <span>Backup & Restore</span>
+                            </a>
+                        </li>
+                        <li class="geex-sidebar__menu__item">
+                            <a href="@Url.Action("Settings","Parking")" class="geex-sidebar__menu__link">
+                                <i class="fas fa-cog"></i>
+                                <span>Pengaturan Umum</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+        <div class="geex-sidebar__footer">
+            <span class="geex-sidebar__footer__title">ParkIRC Parking Management</span>
+            <p class="geex-sidebar__footer__copyright">© 2024 All Rights Reserved</p>
+        </div>
+    </div>
+</div>

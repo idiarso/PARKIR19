@@ -1,0 +1,151 @@
+@model ParkIRC.Models.ParkingRateConfiguration
+
+@{
+    ViewData["Title"] = "Edit Tarif";
+}
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-edit me-2"></i>Edit Tarif Parkir</h6>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="Id" />
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="VehicleType" class="control-label">Jenis Kendaraan</label>
+                            <select asp-for="VehicleType" class="form-control">
+                                <option value="car">Mobil</option>
+                                <option value="motorcycle">Motor</option>
+                                <option value="truck">Truk</option>
+                            </select>
+                            <span asp-validation-for="VehicleType" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="EffectiveFrom" class="control-label">Berlaku Sejak</label>
+                            <input asp-for="EffectiveFrom" class="form-control" type="date" />
+                            <span asp-validation-for="EffectiveFrom" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="BaseRate" class="control-label">Tarif Dasar</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input asp-for="BaseRate" class="form-control" />
+                            </div>
+                            <span asp-validation-for="BaseRate" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="HourlyRate" class="control-label">Tarif per Jam</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input asp-for="HourlyRate" class="form-control" />
+                            </div>
+                            <span asp-validation-for="HourlyRate" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="PenaltyRate" class="control-label">Tarif Denda</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input asp-for="PenaltyRate" class="form-control" />
+                            </div>
+                            <span asp-validation-for="PenaltyRate" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="DailyRate" class="control-label">Tarif Harian</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input asp-for="DailyRate" class="form-control" />
+                            </div>
+                            <span asp-validation-for="DailyRate" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="WeeklyRate" class="control-label">Tarif Mingguan</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input asp-for="WeeklyRate" class="form-control" />
+                            </div>
+                            <span asp-validation-for="WeeklyRate" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="MonthlyRate" class="control-label">Tarif Bulanan</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input asp-for="MonthlyRate" class="form-control" />
+                            </div>
+                            <span asp-validation-for="MonthlyRate" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group form-check mb-3">
+                    <label class="form-check-label">
+                        <input class="form-check-input" asp-for="IsActive" /> @Html.DisplayNameFor(model => model.IsActive)
+                    </label>
+                </div>
+                
+                <div class="form-group mb-4">
+                    <input type="hidden" asp-for="CreatedBy" />
+                    <input type="hidden" asp-for="CreatedAt" />
+                    <input type="hidden" asp-for="LastModifiedBy" />
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Dibuat Oleh</label>
+                            <p>@Model.CreatedBy pada @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Terakhir Dimodifikasi</label>
+                            <p>
+                                @if (Model.LastModifiedAt.HasValue)
+                                {
+                                    @Model.LastModifiedBy <span>pada</span> @Model.LastModifiedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <a asp-action="Index" class="btn btn-secondary">Kembali</a>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

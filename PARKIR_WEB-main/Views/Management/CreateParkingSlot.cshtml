@@ -1,0 +1,70 @@
+@model ParkIRC.Models.ParkingSpace
+
+@{
+    ViewData["Title"] = "Tambah Slot Parkir";
+}
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-plus-circle me-2"></i>Tambah Slot Parkir Baru</h6>
+        </div>
+        <div class="card-body">
+            <form asp-action="CreateParkingSlot" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="SpaceNumber" class="control-label">Nomor Slot</label>
+                            <input asp-for="SpaceNumber" class="form-control" />
+                            <span asp-validation-for="SpaceNumber" class="text-danger"></span>
+                            <small class="form-text text-muted">Contoh: A-01, B-15, dll.</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="SpaceType" class="control-label">Tipe Slot</label>
+                            <select asp-for="SpaceType" class="form-control">
+                                <option value="car">Mobil</option>
+                                <option value="motorcycle">Motor</option>
+                                <option value="truck">Truk</option>
+                            </select>
+                            <span asp-validation-for="SpaceType" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="HourlyRate" class="control-label">Tarif per Jam</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input asp-for="HourlyRate" class="form-control" />
+                            </div>
+                            <span asp-validation-for="HourlyRate" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group form-check mt-4">
+                            <label class="form-check-label">
+                                <input class="form-check-input" asp-for="IsOccupied" /> Terisi
+                            </label>
+                            <span asp-validation-for="IsOccupied" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <a asp-action="ParkingSlots" class="btn btn-secondary">Kembali</a>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

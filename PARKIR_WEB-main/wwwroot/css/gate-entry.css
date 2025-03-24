@@ -1,0 +1,365 @@
+.detection-animation {
+    position: relative;
+    width: 200px;
+    height: 120px;
+    margin: 0 auto;
+    border: 2px solid #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.scanning-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #00ff00;
+    animation: scan 2s linear infinite;
+    box-shadow: 0 0 8px #00ff00;
+}
+
+@keyframes scan {
+    0% {
+        top: 0;
+    }
+    100% {
+        top: 100%;
+    }
+}
+
+/* Region of Interest (ROI) Styles */
+.roi-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.roi-box {
+    position: absolute;
+    border: 2px dashed rgba(0, 255, 0, 0.7);
+    background-color: rgba(0, 255, 0, 0.1);
+    pointer-events: auto;
+    cursor: move;
+    z-index: 11;
+}
+
+.roi-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #fff;
+    border: 2px solid #00ff00;
+    border-radius: 50%;
+    pointer-events: auto;
+    cursor: pointer;
+    z-index: 12;
+}
+
+.roi-handle.top-left {
+    cursor: nw-resize;
+}
+
+.roi-handle.top-right {
+    cursor: ne-resize;
+}
+
+.roi-handle.bottom-left {
+    cursor: sw-resize;
+}
+
+.roi-handle.bottom-right {
+    cursor: se-resize;
+}
+
+.motion-detected {
+    border-color: rgba(255, 193, 7, 0.8);
+    background-color: rgba(255, 193, 7, 0.2);
+    animation: pulse 1s infinite;
+}
+
+.capture-highlight {
+    border-color: rgba(40, 167, 69, 0.8);
+    background-color: rgba(40, 167, 69, 0.2);
+    animation: capture-pulse 0.5s 2;
+}
+
+@keyframes capture-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+        border-color: rgba(40, 167, 69, 0.8);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+        border-color: rgba(40, 167, 69, 1);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+        border-color: rgba(40, 167, 69, 0.8);
+    }
+}
+
+/* Motion Detection Styles */
+.form-check-input {
+    cursor: pointer;
+}
+
+.form-switch .form-check-input {
+    width: 2.5em;
+    height: 1.25em;
+}
+
+.form-switch .form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+}
+
+.badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+.motion-detected {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+    }
+}
+
+/* Form Range Slider */
+.form-range {
+    width: 100%;
+    height: 1.5rem;
+    padding: 0;
+    background-color: transparent;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.form-range:focus {
+    outline: none;
+}
+
+.form-range::-webkit-slider-thumb {
+    width: 1rem;
+    height: 1rem;
+    margin-top: -0.25rem;
+    background-color: #28a745;
+    border: 0;
+    border-radius: 1rem;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.form-range::-moz-range-thumb {
+    width: 1rem;
+    height: 1rem;
+    background-color: #28a745;
+    border: 0;
+    border-radius: 1rem;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.form-range::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 0.5rem;
+    color: transparent;
+    cursor: pointer;
+    background-color: #dee2e6;
+    border-color: transparent;
+    border-radius: 1rem;
+}
+
+.form-range::-moz-range-track {
+    width: 100%;
+    height: 0.5rem;
+    color: transparent;
+    cursor: pointer;
+    background-color: #dee2e6;
+    border-color: transparent;
+    border-radius: 1rem;
+}
+
+#loadingOverlay .progress-bar {
+    transition: width 3s linear;
+}
+
+#loadingOverlay {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+}
+
+.content-wrapper {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+/* Progress Bar */
+.progress {
+    width: 200px;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background-color: #fff;
+    transition: width 0.5s ease;
+}
+
+/* Camera Feed */
+#camera {
+    width: 100%;
+    max-width: 640px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Form Styling */
+.form-label {
+    font-weight: 500;
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Button Styling */
+.btn {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.btn-success:disabled {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+/* Modal Styling */
+.modal-content {
+    border-radius: 0.5rem;
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Alert Styling */
+.alert {
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+/* Print Styling */
+@media print {
+    .modal-footer {
+        display: none;
+    }
+    
+    .btn-close {
+        display: none;
+    }
+    
+    .modal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        margin: 0;
+        padding: 0;
+        min-height: 550px;
+        visibility: visible;
+        overflow: visible;
+    }
+    
+    .modal-dialog {
+        position: absolute;
+        margin: 10px;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        min-width: 100%;
+    }
+    
+    .modal-content {
+        min-height: 100%;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    #barcodeImage {
+        max-width: 300px !important;
+    }
+} 

@@ -1,0 +1,126 @@
+@model ParkIRC.Models.Shift
+
+@{
+    ViewData["Title"] = "Edit Shift";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-edit me-2"></i>Edit Shift
+                    </h6>
+                    <a href="@Url.Action("Shifts", "Management")" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-arrow-left me-2"></i>Kembali
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditShift" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+                        
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Nama Shift</label>
+                            <input asp-for="Name" class="form-control" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="StartTime" class="form-label">Waktu Mulai</label>
+                                    <input asp-for="StartTime" type="time" class="form-control" required />
+                                    <span asp-validation-for="StartTime" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="EndTime" class="form-label">Waktu Selesai</label>
+                                    <input asp-for="EndTime" type="time" class="form-control" required />
+                                    <span asp-validation-for="EndTime" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label d-block">Hari Kerja</label>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input" id="monday" name="WorkDays" value="Monday" @(Model.WorkDays.Contains("Monday") ? "checked" : "")>
+                                <label class="form-check-label" for="monday">Senin</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input" id="tuesday" name="WorkDays" value="Tuesday" @(Model.WorkDays.Contains("Tuesday") ? "checked" : "")>
+                                <label class="form-check-label" for="tuesday">Selasa</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input" id="wednesday" name="WorkDays" value="Wednesday" @(Model.WorkDays.Contains("Wednesday") ? "checked" : "")>
+                                <label class="form-check-label" for="wednesday">Rabu</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input" id="thursday" name="WorkDays" value="Thursday" @(Model.WorkDays.Contains("Thursday") ? "checked" : "")>
+                                <label class="form-check-label" for="thursday">Kamis</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input" id="friday" name="WorkDays" value="Friday" @(Model.WorkDays.Contains("Friday") ? "checked" : "")>
+                                <label class="form-check-label" for="friday">Jumat</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input" id="saturday" name="WorkDays" value="Saturday" @(Model.WorkDays.Contains("Saturday") ? "checked" : "")>
+                                <label class="form-check-label" for="saturday">Sabtu</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="checkbox" class="form-check-input" id="sunday" name="WorkDays" value="Sunday" @(Model.WorkDays.Contains("Sunday") ? "checked" : "")>
+                                <label class="form-check-label" for="sunday">Minggu</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Deskripsi</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="MaxOperators" class="form-label">Jumlah Operator Maksimal</label>
+                            <input asp-for="MaxOperators" type="number" class="form-control" min="1" required />
+                            <span asp-validation-for="MaxOperators" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                <label asp-for="IsActive" class="form-check-label">Aktif</label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Simpan Perubahan
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Form validation
+        $(document).ready(function() {
+            $('form').on('submit', function(e) {
+                var workDays = $('input[name="WorkDays"]:checked').length;
+                if (workDays === 0) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Pilih minimal satu hari kerja!'
+                    });
+                }
+            });
+        });
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

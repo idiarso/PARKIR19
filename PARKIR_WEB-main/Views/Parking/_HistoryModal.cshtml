@@ -1,0 +1,61 @@
+@model ParkIRC.ViewModels.HistoryViewModel
+<div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="historyModalLabel">Riwayat Transaksi</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="startDate" class="form-label">Tanggal Mulai</label>
+                            <input type="date" class="form-control" id="startDate" name="StartDate">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="endDate" class="form-label">Tanggal Akhir</label>
+                            <input type="date" class="form-control" id="endDate" name="EndDate">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="vehicleNumber" class="form-label">Nomor Kendaraan</label>
+                            <input type="text" class="form-control" id="vehicleNumber" name="VehicleNumber">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-primary mt-4" onclick="loadHistory()">
+                            <i class="fas fa-search"></i> Cari
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nomor Transaksi</th>
+                                <th>Nomor Kendaraan</th>
+                                <th>Tipe Kendaraan</th>
+                                <th>Waktu Masuk</th>
+                                <th>Waktu Keluar</th>
+                                <th>Durasi</th>
+                                <th>Biaya</th>
+                                <th>Metode Pembayaran</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>

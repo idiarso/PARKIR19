@@ -1,0 +1,78 @@
+@model IEnumerable<ParkIRC.Models.Operator>
+@{
+    ViewData["Title"] = "Daftar Operator";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Daftar Operator</h4>
+                    <div class="card-tools">
+                        <a href="@Url.Action("Create")" class="btn btn-primary">
+                            <i class="fas fa-plus mr-2"></i>Tambah Operator
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nama</th>
+                                    <th>Email</th>
+                                    <th>No. Telepon</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td>@item.Email</td>
+                                        <td>@item.PhoneNumber</td>
+                                        <td>
+                                            <span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">
+                                                @(item.IsActive ? "Aktif" : "Nonaktif")
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-sm btn-info">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-danger delete-operator" data-id="@item.Id">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('.delete-operator').click(function() {
+                var id = $(this).data('id');
+                if (confirm('Apakah Anda yakin ingin menghapus operator ini?')) {
+                    $.post('@Url.Action("Delete")', { id: id }, function(result) {
+                        if (result.success) {
+                            location.reload();
+                        } else {
+                            alert('Gagal menghapus operator: ' + result.message);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+} 

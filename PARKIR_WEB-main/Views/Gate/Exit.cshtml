@@ -1,0 +1,230 @@
+@{
+    ViewData["Title"] = "Gate Exit";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Scanner Barcode</h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <video id="scanner" class="img-fluid" style="max-width: 100%; border: 1px solid #ddd;"></video>
+                    </div>
+                    <div class="text-center">
+                        <button type="button" class="btn btn-primary" id="startScanBtn">
+                            <i class="fas fa-qrcode me-1"></i> Mulai Scan
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="stopScanBtn" style="display: none;">
+                            <i class="fas fa-stop me-1"></i> Berhenti Scan
+                        </button>
+                    </div>
+                    <div class="mt-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="ticketNumber" placeholder="Nomor Tiket">
+                            <button class="btn btn-primary" type="button" id="searchBtn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">Masukkan nomor tiket jika scan tidak berhasil</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Kamera</h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <video id="camera" class="img-fluid" style="max-width: 100%; border: 1px solid #ddd;"></video>
+                    </div>
+                    <div class="text-center">
+                        <button type="button" class="btn btn-primary" id="captureBtn">
+                            <i class="fas fa-camera me-1"></i> Ambil Foto
+                        </button>
+                    </div>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Modal -->
+    <div class="modal fade" id="resultModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Hasil Pemrosesan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="successContent">
+                        <h4 class="mb-3">Kendaraan Keluar</h4>
+                        <p class="mb-1"><strong>Nomor Kendaraan:</strong> <span id="vehicleNumber"></span></p>
+                        <p class="mb-1"><strong>Waktu Masuk:</strong> <span id="entryTime"></span></p>
+                        <p class="mb-1"><strong>Waktu Keluar:</strong> <span id="exitTime"></span></p>
+                        <p class="mb-1"><strong>Durasi:</strong> <span id="duration"></span></p>
+                        <div class="alert alert-success mt-3">
+                            <i class="fas fa-check-circle me-1"></i> Gate terbuka
+                        </div>
+                    </div>
+                    <div id="errorContent" style="display: none;">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-1"></i>
+                            <span id="errorMessage"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> Cetak
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+        let html5QrcodeScanner;
+        let cameraStream;
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('captureBtn');
+        const startScanBtn = document.getElementById('startScanBtn');
+        const stopScanBtn = document.getElementById('stopScanBtn');
+        const searchBtn = document.getElementById('searchBtn');
+        const ticketNumberInput = document.getElementById('ticketNumber');
+        const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+
+        // Start camera
+        async function startCamera() {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: 1280,
+                        height: 720,
+                        facingMode: "environment"
+                    } 
+                });
+                video.srcObject = cameraStream;
+                video.play();
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                alert('Tidak dapat mengakses kamera. Pastikan kamera tersedia dan izin diberikan.');
+            }
+        }
+
+        // Initialize QR scanner
+        function startScanner() {
+            html5QrcodeScanner = new Html5Qrcode("scanner");
+            html5QrcodeScanner.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                onScanSuccess,
+                onScanFailure
+            );
+            startScanBtn.style.display = 'none';
+            stopScanBtn.style.display = 'inline-block';
+        }
+
+        function stopScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    startScanBtn.style.display = 'inline-block';
+                    stopScanBtn.style.display = 'none';
+                });
+            }
+        }
+
+        // Handle successful scan
+        function onScanSuccess(decodedText, decodedResult) {
+            stopScanner();
+            ticketNumberInput.value = decodedText;
+            processExit();
+        }
+
+        function onScanFailure(error) {
+            // Handle scan failure silently
+        }
+
+        // Process exit
+        async function processExit() {
+            const ticketNumber = ticketNumberInput.value;
+            if (!ticketNumber) {
+                alert('Masukkan nomor tiket');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('ticketNumber', ticketNumber);
+            
+            // Add photo if available
+            if (canvas.toDataURL) {
+                formData.append('base64Image', canvas.toDataURL('image/jpeg'));
+            }
+
+            try {
+                const response = await fetch('/Gate/ProcessExit', {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('vehicleNumber').textContent = result.vehicleNumber;
+                    document.getElementById('entryTime').textContent = new Date(result.entryTime).toLocaleString();
+                    document.getElementById('exitTime').textContent = new Date(result.exitTime).toLocaleString();
+                    document.getElementById('duration').textContent = result.duration;
+                    document.getElementById('successContent').style.display = 'block';
+                    document.getElementById('errorContent').style.display = 'none';
+                } else {
+                    document.getElementById('successContent').style.display = 'none';
+                    document.getElementById('errorContent').style.display = 'block';
+                    document.getElementById('errorMessage').textContent = result.error;
+                }
+                
+                resultModal.show();
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Terjadi kesalahan saat memproses data.');
+            }
+        }
+
+        // Event listeners
+        startScanBtn.addEventListener('click', startScanner);
+        stopScanBtn.addEventListener('click', stopScanner);
+        searchBtn.addEventListener('click', processExit);
+
+        captureBtn.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+        });
+
+        // Start camera when page loads
+        startCamera();
+
+        // Clean up when page unloads
+        window.addEventListener('unload', () => {
+            stopScanner();
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+} 

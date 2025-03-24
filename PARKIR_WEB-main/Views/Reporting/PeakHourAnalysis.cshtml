@@ -1,0 +1,170 @@
+@model dynamic
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">Peak Hour Analysis</h4>
+                    <div class="card-tools">
+                        <input type="date" id="analysisDate" class="form-control" value="@Model.Date" onchange="updateAnalysis(this.value)" />
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">Total Transactions</h6>
+                                    <h3 class="mb-0">@Model.TotalTransactions</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">Total Revenue</h6>
+                                    <h3 class="mb-0">@Model.TotalRevenue.ToString("C2")</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">Peak Hour</h6>
+                                    <h3 class="mb-0">@(Model.PeakHour?.Hour ?? "N/A") (@(Model.PeakHour?.Count ?? 0) vehicles)</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <canvas id="peakHourChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Hour</th>
+                                            <th>Vehicle Count</th>
+                                            <th>Revenue</th>
+                                            <th>Average Revenue per Vehicle</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var hour in Model.HourlyData)
+                                        {
+                                            <tr>
+                                                <td>@hour.Hour</td>
+                                                <td>@hour.Count</td>
+                                                <td>@hour.Revenue.ToString("C2")</td>
+                                                <td>@hour.AverageRevenue.ToString("C2")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const hourlyData = @Html.Raw(Json.Serialize(Model.HourlyData));
+        const ctx = document.getElementById('peakHourChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: hourlyData.map(h => h.Hour),
+                datasets: [
+                    {
+                        label: 'Vehicle Count',
+                        data: hourlyData.map(h => h.Count),
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Revenue',
+                        data: hourlyData.map(h => h.Revenue),
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Vehicle Count'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Revenue'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Peak Hour Analysis'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.dataset.label === 'Revenue') {
+                                    label += new Intl.NumberFormat('id-ID', { 
+                                        style: 'currency', 
+                                        currency: 'IDR' 
+                                    }).format(context.raw);
+                                } else {
+                                    label += context.raw;
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        function updateAnalysis(date) {
+            window.location.href = `/Reporting/PeakHourAnalysis?date=${date}`;
+        }
+    </script>
+}

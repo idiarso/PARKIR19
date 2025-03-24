@@ -1,0 +1,141 @@
+@model IEnumerable<ParkIRC.Models.ParkingActivityViewModel>
+
+@{
+    ViewData["Title"] = "Riwayat Parkir";
+    string currentVehicleType = ViewData["VehicleType"] as string ?? "";
+}
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-history me-2"></i>Riwayat Parkir</h6>
+            <a href="@Url.Action("Export")" class="btn btn-success btn-sm">
+                <i class="fas fa-file-export me-1"></i> Export CSV
+            </a>
+        </div>
+        <div class="card-body">
+            <!-- Filter Form -->
+            <form method="get" class="mb-4">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="searchString">Nomor Kendaraan</label>
+                        <input type="text" class="form-control" id="searchString" name="searchString" value="@ViewData["CurrentFilter"]">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="startDate">Tanggal Mulai</label>
+                        <input type="date" class="form-control" id="startDate" name="startDate" value="@(ViewData["StartDate"] != null ? Convert.ToDateTime(ViewData["StartDate"]).ToString("yyyy-MM-dd") : "")">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="endDate">Tanggal Akhir</label>
+                        <input type="date" class="form-control" id="endDate" name="endDate" value="@(ViewData["EndDate"] != null ? Convert.ToDateTime(ViewData["EndDate"]).ToString("yyyy-MM-dd") : "")">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="vehicleType">Jenis Kendaraan</label>
+                        <select class="form-control" id="vehicleType" name="vehicleType">
+                            <option value="">Semua Jenis</option>
+                            @if (currentVehicleType == "car")
+                            {
+                                <option value="car" selected>Mobil</option>
+                            }
+                            else
+                            {
+                                <option value="car">Mobil</option>
+                            }
+                            
+                            @if (currentVehicleType == "motorcycle")
+                            {
+                                <option value="motorcycle" selected>Motor</option>
+                            }
+                            else
+                            {
+                                <option value="motorcycle">Motor</option>
+                            }
+                            
+                            @if (currentVehicleType == "truck")
+                            {
+                                <option value="truck" selected>Truk</option>
+                            }
+                            else
+                            {
+                                <option value="truck">Truk</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-1"></i> Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-bordered" id="historyTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Nomor Kendaraan</th>
+                            <th>Waktu Masuk</th>
+                            <th>Waktu Keluar</th>
+                            <th>Durasi</th>
+                            <th>Biaya</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.VehicleNumber</td>
+                                <td>@item.EntryTime.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                <td>
+                                    @if (item.ExitTime.HasValue)
+                                    {
+                                        @item.ExitTime.Value.ToString("dd/MM/yyyy HH:mm:ss")
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>@item.Duration</td>
+                                <td>
+                                    @if (item.Status == "Completed")
+                                    {
+                                        <span>Rp @item.Amount.ToString("N0")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Status == "Completed")
+                                    {
+                                        <span class="badge bg-success">Selesai</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Dalam Parkir</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#historyTable').DataTable({
+                order: [[1, 'desc']], // Sort by entry time (descending)
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/id.json'
+                }
+            });
+        });
+    </script>
+} 

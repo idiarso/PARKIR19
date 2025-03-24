@@ -1,0 +1,102 @@
+@model IEnumerable<ParkIRC.Models.ParkingRateConfiguration>
+
+@{
+    ViewData["Title"] = "Tarif Parkir";
+}
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-money-bill-wave me-2"></i>Tarif Parkir</h6>
+            <a href="@Url.Action("Create")" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus me-1"></i> Tambah Tarif Baru
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="ratesTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Jenis Kendaraan</th>
+                            <th>Tarif Dasar</th>
+                            <th>Tarif per Jam</th>
+                            <th>Tarif Harian</th>
+                            <th>Tarif Mingguan</th>
+                            <th>Tarif Bulanan</th>
+                            <th>Status</th>
+                            <th>Berlaku Sejak</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.VehicleType</td>
+                                <td>Rp @item.BaseRate.ToString("N0")</td>
+                                <td>Rp @item.HourlyRate.ToString("N0")</td>
+                                <td>Rp @item.DailyRate.ToString("N0")</td>
+                                <td>Rp @item.WeeklyRate.ToString("N0")</td>
+                                <td>Rp @item.MonthlyRate.ToString("N0")</td>
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success">Aktif</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Tidak Aktif</span>
+                                    }
+                                </td>
+                                <td>@item.EffectiveFrom.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="@Url.Action("Edit", new { id = item.Id })" class="btn btn-sm btn-info">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Delete Modal -->
+                                    <div class="modal fade" id="deleteModal-@item.Id" tabindex="-1" aria-labelledby="deleteModalLabel-@item.Id" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="deleteModalLabel-@item.Id">Konfirmasi Hapus</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    Apakah Anda yakin ingin menghapus tarif parkir untuk <strong>@item.VehicleType</strong>?
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post">
+                                                        <button type="submit" class="btn btn-danger">Hapus</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#ratesTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/id.json'
+                }
+            });
+        });
+    </script>
+} 

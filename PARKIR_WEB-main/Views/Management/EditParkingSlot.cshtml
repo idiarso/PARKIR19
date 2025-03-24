@@ -1,0 +1,40 @@
+@using ParkIRC.Models
+@model ParkingSpace
+
+@{
+    ViewData["Title"] = "Edit Parking Slot";
+}
+
+<div class="container mt-4">
+    <h2>Edit Parking Slot</h2>
+    <form asp-action="EditParkingSlot" method="post">
+        <input type="hidden" asp-for="Id" />
+        <div class="form-group">
+            <label asp-for="SpaceNumber" class="control-label">Space Number</label>
+            <input asp-for="SpaceNumber" class="form-control" />
+            <span asp-validation-for="SpaceNumber" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="SpaceType" class="control-label">Space Type</label>
+            <select asp-for="SpaceType" class="form-control" disabled="@(Model.CurrentVehicle != null)">
+                <option value="car">Car</option>
+                <option value="motorcycle">Motorcycle</option>
+                <option value="truck">Truck</option>
+            </select>
+            <span asp-validation-for="SpaceType" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="HourlyRate" class="control-label">Hourly Rate</label>
+            <input asp-for="HourlyRate" class="form-control" type="number" step="0.01" />
+            <span asp-validation-for="HourlyRate" class="text-danger"></span>
+        </div>
+        <div class="form-group mt-3">
+            <input type="submit" value="Save" class="btn btn-primary" />
+            <a asp-action="ManageParkingSlots" class="btn btn-secondary">Back to List</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

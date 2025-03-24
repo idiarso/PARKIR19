@@ -1,0 +1,248 @@
+@{
+    ViewData["Title"] = "Transaksi Parkir";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Left Column - Camera Feed -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-camera me-2"></i>Kamera
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="camera-container">
+                        <video id="camera" class="w-100" autoplay playsinline></video>
+                        <canvas id="captureCanvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="p-3">
+                        <button type="button" class="btn btn-primary w-100" id="captureBtn">
+                            <i class="fas fa-camera me-2"></i>Ambil Foto
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Captured Image Preview -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-image me-2"></i>Foto Kendaraan
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <img id="capturedImage" class="w-100" style="display: none;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Transaction Details -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-receipt me-2"></i>Detail Transaksi
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="transactionForm">
+                        <!-- Transaction Number -->
+                        <div class="mb-3">
+                            <label class="form-label">Nomor Transaksi</label>
+                            <input type="text" class="form-control" id="transactionNumber" readonly>
+                        </div>
+
+                        <!-- Vehicle Number -->
+                        <div class="mb-3">
+                            <label class="form-label">Nomor Kendaraan</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="vehicleNumber" required 
+                                       pattern="[A-Z]{1,2}\s\d{1,4}\s[A-Z]{1,3}"
+                                       placeholder="Contoh: B 1234 ABC">
+                                <button class="btn btn-outline-secondary" type="button" id="searchVehicle">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Entry Time -->
+                        <div class="mb-3">
+                            <label class="form-label">Waktu Masuk</label>
+                            <input type="text" class="form-control" id="entryTime" readonly>
+                        </div>
+
+                        <!-- Exit Time -->
+                        <div class="mb-3">
+                            <label class="form-label">Waktu Keluar</label>
+                            <input type="text" class="form-control" id="exitTime" readonly>
+                        </div>
+
+                        <!-- Duration -->
+                        <div class="mb-3">
+                            <label class="form-label">Durasi</label>
+                            <input type="text" class="form-control" id="duration" readonly>
+                        </div>
+
+                        <!-- Rate -->
+                        <div class="mb-3">
+                            <label class="form-label">Tarif</label>
+                            <input type="text" class="form-control" id="rate" readonly>
+                        </div>
+
+                        <!-- Total Amount -->
+                        <div class="mb-3">
+                            <label class="form-label">Total Bayar</label>
+                            <input type="text" class="form-control form-control-lg bg-light fw-bold" id="totalAmount" readonly>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="mb-3">
+                            <label class="form-label">Metode Pembayaran</label>
+                            <select class="form-select" id="paymentMethod" required>
+                                <option value="Cash">Tunai</option>
+                                <option value="QRIS">QRIS</option>
+                                <option value="Card">Kartu Debit/Kredit</option>
+                            </select>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>Proses Pembayaran
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="window.location.reload()">
+                                <i class="fas fa-redo me-2"></i>Batal
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let stream;
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('captureCanvas');
+        const captureBtn = document.getElementById('captureBtn');
+        const capturedImage = document.getElementById('capturedImage');
+        const form = document.getElementById('transactionForm');
+
+        // Initialize camera
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: 1280,
+                        height: 720,
+                        facingMode: "environment"
+                    } 
+                });
+                video.srcObject = stream;
+                await video.play();
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                alert('Tidak dapat mengakses kamera. Pastikan kamera tersedia dan izin diberikan.');
+            }
+        }
+
+        // Capture photo
+        captureBtn.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            capturedImage.src = canvas.toDataURL('image/jpeg');
+            capturedImage.style.display = 'block';
+        });
+
+        // Search vehicle
+        document.getElementById('searchVehicle').addEventListener('click', async () => {
+            const vehicleNumber = document.getElementById('vehicleNumber').value;
+            if (!vehicleNumber) {
+                alert('Masukkan nomor kendaraan');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Parking/CheckVehicleAvailability?vehicleNumber=${encodeURIComponent(vehicleNumber)}`);
+                const data = await response.json();
+
+                if (data.vehicle) {
+                    document.getElementById('entryTime').value = new Date(data.vehicle.entryTime).toLocaleString();
+                    document.getElementById('exitTime').value = new Date().toLocaleString();
+                    document.getElementById('rate').value = new Intl.NumberFormat('id-ID', { 
+                        style: 'currency', 
+                        currency: 'IDR' 
+                    }).format(data.rate);
+                    
+                    // Calculate duration
+                    const entryTime = new Date(data.vehicle.entryTime);
+                    const exitTime = new Date();
+                    const duration = Math.ceil((exitTime - entryTime) / (1000 * 60 * 60));
+                    document.getElementById('duration').value = `${duration} jam`;
+                    
+                    // Calculate total amount
+                    const totalAmount = duration * data.rate;
+                    document.getElementById('totalAmount').value = new Intl.NumberFormat('id-ID', { 
+                        style: 'currency', 
+                        currency: 'IDR' 
+                    }).format(totalAmount);
+                } else {
+                    alert('Kendaraan tidak ditemukan atau sudah keluar');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Terjadi kesalahan saat mencari kendaraan');
+            }
+        });
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                vehicleNumber: document.getElementById('vehicleNumber').value,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                capturedImage: capturedImage.src
+            };
+
+            try {
+                const response = await fetch('/Parking/ProcessTransaction', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('Transaksi berhasil diproses');
+                    // Print receipt or show success message
+                    window.location.reload();
+                } else {
+                    alert(result.message || 'Terjadi kesalahan saat memproses transaksi');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Terjadi kesalahan saat memproses transaksi');
+            }
+        });
+
+        // Initialize camera when page loads
+        initCamera();
+
+        // Clean up when page unloads
+        window.addEventListener('unload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+} 

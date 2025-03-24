@@ -1,0 +1,114 @@
+/* Dashboard Responsive Styles */
+
+/* Card Responsiveness */
+.dashboard-card {
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.dashboard-card .card-body {
+    padding: 1.25rem;
+}
+
+/* Improved Typography */
+.dashboard-card h3 {
+    font-size: calc(1.5rem + 0.5vw);
+    font-weight: 600;
+}
+
+.dashboard-card h6 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Icon Styles */
+.dashboard-card .card-icon {
+    font-size: calc(2rem + 1vw);
+    opacity: 0.7;
+}
+
+/* Chart Containers */
+.chart-container {
+    position: relative;
+    height: 50vh;
+    max-height: 400px;
+    min-height: 250px;
+}
+
+/* Table Responsiveness */
+.activity-table {
+    font-size: 0.9rem;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    .dashboard-card {
+        margin-bottom: 1rem;
+    }
+
+    .dashboard-card .card-body {
+        padding: 1rem;
+    }
+
+    .dashboard-card h3 {
+        font-size: 1.5rem;
+    }
+
+    .chart-container {
+        height: 40vh;
+        min-height: 200px;
+    }
+
+    .activity-table {
+        font-size: 0.8rem;
+    }
+    
+    .table-responsive {
+        margin: 0 -0.75rem;
+    }
+}
+
+/* Small Mobile Optimizations */
+@media (max-width: 576px) {
+    .dashboard-card h3 {
+        font-size: 1.25rem;
+    }
+
+    .dashboard-card .card-icon {
+        font-size: 1.5rem;
+    }
+
+    .chart-container {
+        height: 35vh;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .dashboard-card {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+}
+
+/* Animation for Loading States */
+.dashboard-card.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Improved Chart Legend */
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    justify-content: center;
+}
+
+/* Improved Badge Styles */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+    font-weight: 600;
+} 

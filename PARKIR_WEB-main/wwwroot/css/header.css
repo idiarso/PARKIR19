@@ -1,0 +1,327 @@
+/*---------------------------------------
+#. Header
+---------------------------------------*/
+/* BEM Element and Modifier */
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+  99% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+            transform: rotate(0deg);
+  }
+  99% {
+    -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+  }
+}
+
+/* Header base styles */
+.geex-header {
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+}
+
+.geex-header.header-hidden {
+  transform: translateY(-100%);
+}
+
+.geex-header__wrapper {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Logo styles */
+.geex-header__logo-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.geex-header__logo img {
+  height: 40px;
+  width: auto;
+}
+
+/* Menu styles */
+.geex-header__menu-wrapper {
+  flex: 1;
+  margin-left: 2rem;
+}
+
+.geex-header__menu {
+  display: flex;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.geex-header__menu__item {
+  position: relative;
+}
+
+.geex-header__menu__link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #333;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.geex-header__menu__link:hover,
+.geex-header__menu__link.active {
+  color: #007bff;
+}
+
+/* Submenu styles */
+.geex-header__submenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  padding: 0.5rem 0;
+  list-style: none;
+}
+
+.geex-header__menu__item:hover > .geex-header__submenu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.geex-header__submenu .geex-header__menu__item {
+  margin: 0;
+}
+
+.geex-header__submenu .geex-header__menu__link {
+  padding: 0.5rem 1rem;
+  display: block;
+}
+
+/* Right side elements */
+.geex-header__right-side {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* User profile dropdown */
+.geex-header__user-profile {
+  position: relative;
+}
+
+.dropdown-menu {
+  margin-top: 0.5rem;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.dropdown-item {
+  padding: 0.5rem 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Mobile menu toggle button */
+.geex-header__mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #333;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.geex-header__mobile-toggle:hover,
+.geex-header__mobile-toggle.active {
+  color: #007bff;
+}
+
+/* Main content adjustment */
+.geex-main-content {
+  padding-top: 73px; /* Header height + some spacing */
+  transition: padding-top 0.3s ease;
+}
+
+.geex-main-content.header-hidden {
+  padding-top: 0;
+}
+
+/* Responsive styles */
+@media (max-width: 991px) {
+  .geex-header__mobile-toggle {
+    display: block;
+  }
+
+  .geex-header__menu-wrapper {
+    position: fixed;
+    top: 73px; /* Header height */
+    left: -280px;
+    width: 280px;
+    height: calc(100vh - 73px);
+    background: #fff;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+    transition: left 0.3s ease;
+    overflow-y: auto;
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .geex-header__menu-wrapper.active {
+    left: 0;
+  }
+
+  .geex-header__menu {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .geex-header__menu__item {
+    width: 100%;
+  }
+
+  .geex-header__menu__link {
+    padding: 0.75rem 1rem;
+    width: 100%;
+  }
+
+  .geex-header__submenu {
+    position: static;
+    box-shadow: none;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    display: none;
+    padding-left: 1.5rem;
+  }
+
+  .geex-header__menu__item.active > .geex-header__submenu {
+    display: block;
+  }
+
+  .geex-header__menu__item.has-children > .geex-header__menu__link:after {
+    content: '\f107';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    margin-left: auto;
+    transition: transform 0.3s ease;
+  }
+
+  .geex-header__menu__item.has-children.active > .geex-header__menu__link:after {
+    transform: rotate(180deg);
+  }
+}
+
+@media (max-width: 576px) {
+  .geex-header__wrapper {
+    padding: 0.5rem 1rem;
+  }
+
+  .geex-header__logo img {
+    height: 32px;
+  }
+
+  .geex-header__menu-wrapper {
+    top: 65px; /* Adjusted header height for mobile */
+    height: calc(100vh - 65px);
+  }
+
+  .geex-main-content {
+    padding-top: 65px;
+  }
+}
+
+html[data-nav="top"] .geex-header {
+  display: block;
+}
+
+html[data-nav="top"] .geex-content__header .geex-content__header__customizer {
+  display: none;
+}
+
+html[data-nav="top"] .geex-sidebar {
+  display: none;
+}
+
+@media only screen and (max-width: 1199px) {
+  html[data-nav="top"] .geex-header {
+    display: none;
+  }
+  html[data-nav="top"] .geex-content__header .geex-content__header__customizer {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+  }
+  html[data-nav="top"] .geex-sidebar {
+    display: block;
+  }
+}
+
+/* Header toggle button */
+.header-toggle {
+    position: fixed;
+    top: 10px;
+    right: 20px;
+    z-index: 1001;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+}
+
+.header-toggle:hover {
+    background: #0056b3;
+    transform: scale(1.05);
+}
+
+.header-toggle.header-hidden {
+    top: 10px;
+    background: #28a745;
+}
+
+.header-toggle i {
+    transition: transform 0.3s ease;
+}
+
+.header-toggle.header-hidden i {
+    transform: rotate(180deg);
+}
+

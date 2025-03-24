@@ -1,0 +1,116 @@
+@model dynamic
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Daily Revenue Report</h4>
+                    <div class="card-tools">
+                        <input type="date" id="reportDate" class="form-control" value="@Model.Date.ToString("yyyy-MM-dd")" onchange="updateReport(this.value)" />
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="info-box">
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Total Revenue</span>
+                                    <span class="info-box-number">$@Model.TotalAmount.ToString("N2")</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-box">
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Total Transactions</span>
+                                    <span class="info-box-number">@Model.TransactionCount</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-box">
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Average Per Transaction</span>
+                                    <span class="info-box-number">$@((Model.TotalAmount / (Model.TransactionCount == 0 ? 1 : Model.TransactionCount)).ToString("N2"))</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Hour</th>
+                                        <th>Revenue</th>
+                                        <th>Transactions</th>
+                                        <th>Average</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var hour in Model.HourlyBreakdown)
+                                    {
+                                        <tr>
+                                            <td>@(hour.Hour):00</td>
+                                            <td>$@hour.Amount.ToString("N2")</td>
+                                            <td>@hour.Count</td>
+                                            <td>$@((hour.Amount / hour.Count).ToString("N2"))</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Initialize the revenue chart
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        const hourlyData = @Html.Raw(Json.Serialize(Model.HourlyBreakdown));
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: hourlyData.map(h => `${h.Hour}:00`),
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: hourlyData.map(h => h.Amount),
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        function updateReport(date) {
+            window.location.href = `/Reporting/DailyRevenue?date=${date}`;
+        }
+    </script>
+}

@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+# Stop and disable service
+systemctl stop parkirc || true
+systemctl disable parkirc || true
+
+# Remove service file
+rm -f /etc/systemd/system/parkirc.service
+
+# Remove desktop entry
+rm -f /usr/share/applications/parkirc.desktop
+
+# Reload systemd
+systemctl daemon-reload 

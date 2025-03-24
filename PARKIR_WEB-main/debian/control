@@ -1,0 +1,14 @@
+Package: parkirc
+Version: 1.0
+Section: web
+Priority: optional
+Architecture: amd64
+Depends: libicu-dev, openssl
+Maintainer: Your Name <your.email@example.com>
+Description: ParkIRC Parking Management System
+ A web-based parking management system built with ASP.NET Core.
+ Features include:
+  * Parking space management
+  * Vehicle tracking
+  * Revenue reporting
+  * Real-time monitoring 

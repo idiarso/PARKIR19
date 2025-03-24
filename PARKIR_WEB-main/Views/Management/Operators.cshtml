@@ -1,0 +1,158 @@
+@model List<ParkIRC.ViewModels.OperatorViewModel>
+
+@{
+    ViewData["Title"] = "Daftar Operator";
+}
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-users me-2"></i>Daftar Operator
+            </h6>
+            <a asp-action="CreateOperator" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus me-1"></i> Tambah Operator
+            </a>
+        </div>
+        <div class="card-body">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr class="bg-light">
+                            <th>Nama</th>
+                            <th>Email</th>
+                            <th>No. Badge</th>
+                            <th>No. Telepon</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Operator.FullName</td>
+                                <td>@item.Operator.Email</td>
+                                <td>@item.Operator.BadgeNumber</td>
+                                <td>@item.Operator.PhoneNumber</td>
+                                <td>
+                                    <span class="badge rounded-pill bg-@(GetRoleBadgeClass(item.Role))">
+                                        @item.Role
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (item.Operator.IsActive)
+                                    {
+                                        <span class="badge rounded-pill bg-success">Aktif</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge rounded-pill bg-danger">Tidak Aktif</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a asp-action="EditOperator" asp-route-id="@item.Operator.Id" class="btn btn-sm btn-info">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-danger delete-operator" 
+                                                data-id="@item.Operator.Id" 
+                                                data-name="@item.Operator.FullName">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteOperatorModal" tabindex="-1" aria-labelledby="deleteOperatorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteOperatorModalLabel">Konfirmasi Hapus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus operator <strong id="operatorNameToDelete"></strong>?</p>
+                <p class="text-danger">Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <form id="deleteOperatorForm" asp-action="DeleteOperator" method="post">
+                    <input type="hidden" id="operatorIdToDelete" name="id" />
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Hapus</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Delete operator confirmation
+            $('.delete-operator').click(function() {
+                var id = $(this).data('id');
+                var name = $(this).data('name');
+                $('#operatorIdToDelete').val(id);
+                $('#operatorNameToDelete').text(name);
+                $('#deleteOperatorModal').modal('show');
+            });
+            
+            // Handle form submission with AJAX
+            $('#deleteOperatorForm').submit(function(e) {
+                e.preventDefault();
+                
+                var form = $(this);
+                var url = form.attr('action');
+                
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    data: form.serialize(),
+                    success: function(data) {
+                        $('#deleteOperatorModal').modal('hide');
+                        if (data.success) {
+                            // Reload page on success
+                            location.reload();
+                        } else {
+                            // Show error
+                            alert('Error: ' + data.message);
+                        }
+                    },
+                    error: function() {
+                        $('#deleteOperatorModal').modal('hide');
+                        alert('Terjadi kesalahan. Silakan coba lagi.');
+                    }
+                });
+            });
+        });
+    </script>
+}
+
+@functions {
+    public string GetRoleBadgeClass(string role) {
+        return role switch {
+            "Admin" => "primary",
+            "Staff" => "info",
+            _ => "secondary"
+        };
+    }
+} 

@@ -1,0 +1,53 @@
+@model ParkIRC.ViewModels.ReportViewModel
+<div class="modal fade" id="reportModal" tabindex="-1" role="dialog" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="reportModalLabel">Cetak Laporan</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="reportForm" onsubmit="return handleReportSubmit(event)">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="reportType" class="form-label">Tipe Laporan</label>
+                                <select class="form-select" id="reportType" name="ReportType" required>
+                                    <option value="">Pilih tipe laporan</option>
+                                    <option value="Daily">Harian</option>
+                                    <option value="Weekly">Mingguan</option>
+                                    <option value="Monthly">Bulanan</option>
+                                    <option value="Custom">Kustom</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="reportDate" class="form-label">Tanggal</label>
+                                <input type="date" class="form-control" id="reportDate" name="ReportDate">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" id="customDateRange" style="display: none;">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="startDate" class="form-label">Tanggal Mulai</label>
+                                <input type="date" class="form-control" id="startDate" name="StartDate">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="endDate" class="form-label">Tanggal Akhir</label>
+                                <input type="date" class="form-control" id="endDate" name="EndDate">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning">Cetak</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
