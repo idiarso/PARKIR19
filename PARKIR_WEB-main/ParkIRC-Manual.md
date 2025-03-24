@@ -49,7 +49,7 @@ ParkIRC adalah sistem manajemen parkir modern yang dirancang untuk memudahkan pe
 
 ### 3.1 Akses Pertama Kali
 - Email default: admin@parkingsystem.com
-- Password default: Admin@123
+- Password default: Admin@123 diganti setelah login Admin@1234
 
 ### 3.2 Mengubah Password
 1. Klik profil di pojok kanan atas

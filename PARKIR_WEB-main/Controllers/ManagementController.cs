@@ -275,6 +275,9 @@ namespace ParkIRC.Controllers
                         return NotFound();
                     }
 
+                    // Debug valores recibidos
+                    _logger.LogInformation($"Editando operador: ID={id}, BadgeNumber={model.Operator.BadgeNumber}, PhoneNumber={model.Operator.PhoneNumber}");
+
                     // Update basic properties
                     existingOperator.FullName = model.Operator.FullName;
                     existingOperator.BadgeNumber = model.Operator.BadgeNumber;
@@ -283,7 +286,23 @@ namespace ParkIRC.Controllers
                     existingOperator.LastModifiedAt = DateTime.UtcNow;
                     existingOperator.LastModifiedBy = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                     
-                    await _userManager.UpdateAsync(existingOperator);
+                    // Debug valores después de asignar
+                    _logger.LogInformation($"Valores asignados: BadgeNumber={existingOperator.BadgeNumber}, PhoneNumber={existingOperator.PhoneNumber}");
+                    
+                    var result = await _userManager.UpdateAsync(existingOperator);
+                    if (!result.Succeeded)
+                    {
+                        _logger.LogError($"Error al actualizar operador: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                        ModelState.AddModelError("", "Error al actualizar el operador");
+                        foreach (var error in result.Errors)
+                        {
+                            ModelState.AddModelError("", error.Description);
+                        }
+                        return View(model);
+                    }
+                    
+                    // Debug después de actualizar
+                    _logger.LogInformation("Operador actualizado correctamente");
                     
                     // Update role if changed
                     var currentRoles = await _userManager.GetRolesAsync(existingOperator);

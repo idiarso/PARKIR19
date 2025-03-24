@@ -10,6 +10,11 @@ using ParkIRC.Middleware;
 using Microsoft.Extensions.Logging;
 using NLog;
 using NLog.Web;
+using System.Runtime.CompilerServices;
+
+// Configurar comportamiento legacy de timestamps para Npgsql
+// Esto permite usar DateTime locales con PostgreSQL
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 // Early init of NLog to allow startup and exception logging
 var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
@@ -27,8 +32,8 @@ try
     // Add database configuration
     builder.Services.AddDbContext<ApplicationDbContext>(options => {
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-        options.UseSqlite(connectionString, sqliteOptions => {
-            sqliteOptions.MigrationsAssembly(typeof(Program).Assembly.FullName);
+        options.UseNpgsql(connectionString, npgsqlOptions => {
+            npgsqlOptions.MigrationsAssembly(typeof(Program).Assembly.FullName);
         });
         
         // Enable detailed error messages in Development
@@ -102,12 +107,12 @@ try
         try
         {
             var context = services.GetRequiredService<ApplicationDbContext>();
-            context.Database.Migrate();
-            logger.Info("Database migrated successfully");
+            context.Database.EnsureCreated();
+            logger.Info("Database created successfully");
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "An error occurred while migrating the database.");
+            logger.Error(ex, "An error occurred while creating the database.");
         }
     }
 
@@ -143,21 +148,61 @@ try
         {
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             
-            // Create database directory if it doesn't exist
+            // Create database directory if it doesn't exist (no necesario para PostgreSQL, pero lo dejamos por si vuelven a SQLite)
             var dbPath = Path.GetDirectoryName(builder.Configuration.GetConnectionString("DefaultConnection").Replace("Data Source=", ""));
             if (!string.IsNullOrEmpty(dbPath) && !Directory.Exists(dbPath))
             {
                 Directory.CreateDirectory(dbPath);
             }
             
-            // Ensure database is created
-            context.Database.EnsureCreated();
-            
             // Test database connection
             if (!context.Database.CanConnect())
             {
                 logger.Error("Cannot connect to database");
                 throw new Exception("Database connection failed");
+            }
+
+            // Initialize database with default data if empty (agregamos verificación específica para usuarios)
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Operator>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            // Create roles if they don't exist
+            if (!await roleManager.RoleExistsAsync("Admin"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("Admin"));
+                logger.Info("Admin role created");
+            }
+            if (!await roleManager.RoleExistsAsync("Staff"))
+            {
+                await roleManager.CreateAsync(new IdentityRole("Staff"));
+                logger.Info("Staff role created");
+            }
+
+            // Create admin user if it doesn't exist
+            if (await userManager.FindByEmailAsync("admin@parkingsystem.com") == null)
+            {
+                var adminUser = new Operator
+                {
+                    UserName = "admin@parkingsystem.com",
+                    Email = "admin@parkingsystem.com",
+                    FullName = "System Administrator",
+                    Name = "System Administrator",
+                    EmailConfirmed = true,
+                    IsActive = true,
+                    JoinDate = DateTime.Today,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                var result = await userManager.CreateAsync(adminUser, "Admin@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                    logger.Info("Admin user created successfully");
+                }
+                else
+                {
+                    logger.Error($"Failed to create admin user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                }
             }
 
             // Initialize database with default data if empty
@@ -173,43 +218,8 @@ try
                 };
                 context.ParkingSpaces.AddRange(parkingSpaces);
                 
-                // Add default admin user
-                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Operator>>();
-                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-                // Create roles
-                if (!await roleManager.RoleExistsAsync("Admin"))
-                {
-                    await roleManager.CreateAsync(new IdentityRole("Admin"));
-                }
-                if (!await roleManager.RoleExistsAsync("Staff"))
-                {
-                    await roleManager.CreateAsync(new IdentityRole("Staff"));
-                }
-
-                // Create admin user
-                if (await userManager.FindByEmailAsync("admin@parkingsystem.com") == null)
-                {
-                    var adminUser = new Operator
-                    {
-                        UserName = "admin@parkingsystem.com",
-                        Email = "admin@parkingsystem.com",
-                        FullName = "System Administrator",
-                        Name = "System Administrator",
-                        EmailConfirmed = true,
-                        IsActive = true,
-                        JoinDate = DateTime.Today,
-                        CreatedAt = DateTime.UtcNow
-                    };
-
-                    var result = await userManager.CreateAsync(adminUser, "Admin@123");
-                    if (result.Succeeded)
-                    {
-                        await userManager.AddToRoleAsync(adminUser, "Admin");
-                    }
-                }
-
                 await context.SaveChangesAsync();
+                logger.Info("Default parking spaces created");
             }
         }
         catch (Exception ex)
