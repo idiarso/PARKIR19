@@ -76,40 +76,60 @@ namespace ParkIRC.Models
         [Display(Name = "Diubah Pada")]
         public DateTime? LastModifiedAt { get; set; }
 
+        // Additional properties referenced in controllers
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal MotorcycleRate { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal CarRate { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal AdditionalHourRate { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal MaximumDailyRate { get; set; }
+
+        public DateTime LastUpdated { get; set; }
+        public string UpdatedBy { get; set; } = string.Empty;
+
         // Custom validation
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
+            var results = new List<ValidationResult>();
+
             // Validate that daily rate is less than 24 hours of hourly rate
             if (DailyRate >= HourlyRate * 24)
             {
-                yield return new ValidationResult(
+                results.Add(new ValidationResult(
                     "Tarif harian harus lebih murah dari akumulasi tarif per jam selama 24 jam",
-                    new[] { nameof(DailyRate) });
+                    new[] { nameof(DailyRate) }));
             }
 
             // Validate that weekly rate is less than 7 days of daily rate
             if (WeeklyRate >= DailyRate * 7)
             {
-                yield return new ValidationResult(
+                results.Add(new ValidationResult(
                     "Tarif mingguan harus lebih murah dari akumulasi tarif harian selama 7 hari",
-                    new[] { nameof(WeeklyRate) });
+                    new[] { nameof(WeeklyRate) }));
             }
 
             // Validate that monthly rate is less than 30 days of daily rate
             if (MonthlyRate >= DailyRate * 30)
             {
-                yield return new ValidationResult(
+                results.Add(new ValidationResult(
                     "Tarif bulanan harus lebih murah dari akumulasi tarif harian selama 30 hari",
-                    new[] { nameof(MonthlyRate) });
+                    new[] { nameof(MonthlyRate) }));
             }
 
             // Validate effective dates
             if (EffectiveTo.HasValue && EffectiveTo.Value <= EffectiveFrom)
             {
-                yield return new ValidationResult(
+                results.Add(new ValidationResult(
                     "Tanggal berlaku akhir harus setelah tanggal berlaku awal",
-                    new[] { nameof(EffectiveTo) });
+                    new[] { nameof(EffectiveTo) }));
             }
+
+            return results;
         }
     }
 }

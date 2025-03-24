@@ -7,17 +7,17 @@ namespace ParkIRC.ViewModels
     {
         [Required(ErrorMessage = "Nomor kendaraan wajib diisi")]
         [Display(Name = "Nomor Kendaraan")]
-        public string VehicleNumber { get; set; }
+        public string VehicleNumber { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Tipe kendaraan wajib dipilih")]
         [Display(Name = "Tipe Kendaraan")]
-        public string VehicleType { get; set; }
+        public string VehicleType { get; set; } = string.Empty;
 
         [Display(Name = "Nama Pengemudi")]
-        public string DriverName { get; set; }
+        public string DriverName { get; set; } = string.Empty;
 
         [Display(Name = "Nomor Kontak")]
         [Phone]
-        public string ContactNumber { get; set; }
+        public string ContactNumber { get; set; } = string.Empty;
     }
 }

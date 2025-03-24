@@ -1,0 +1,60 @@
+@{
+    ViewData["Title"] = "System Management";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">ParkIRC System Management</h4>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Welcome to the system management interface. Select an option below to manage your system.</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Backup System</h5>
+                                    <p class="card-text">Create backups of your database, uploads, and configuration.</p>
+                                    <a href="@Url.Action("Backup", "Management")" class="btn btn-primary">Manage Backups</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Restore System</h5>
+                                    <p class="card-text">Restore your system from a previous backup.</p>
+                                    <a href="@Url.Action("Restore", "Management")" class="btn btn-warning">Restore System</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Printer Management</h5>
+                                    <p class="card-text">Configure and test your printer settings.</p>
+                                    <a href="@Url.Action("Printer", "Management")" class="btn btn-success">Manage Printer</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">System Status</h5>
+                                    <p class="card-text">Check the status of your system components.</p>
+                                    <a href="@Url.Action("SystemStatus", "Management")" class="btn btn-info">View Status</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

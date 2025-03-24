@@ -1,0 +1,111 @@
+@model ParkIRC.Models.ViewModels.RestoreViewModel
+@{
+    ViewData["Title"] = "Restore System";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="@Url.Action("Index", "Management")" class="btn btn-secondary mb-3">
+                <i class="fas fa-arrow-left me-2"></i> Back to Management
+            </a>
+            
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">Restore System</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> Restoring will overwrite your current data. Make sure you have a backup before proceeding.
+                    </div>
+                    
+                    @if (Model.AvailableBackups.Any())
+                    {
+                        <form method="post" asp-action="PerformRestore">
+                            <div class="form-group mb-4">
+                                <label for="SelectedBackup">Select Backup to Restore:</label>
+                                <select class="form-select" id="SelectedBackup" name="SelectedBackup" required>
+                                    <option value="">-- Select Backup --</option>
+                                    @foreach (var backup in Model.AvailableBackups)
+                                    {
+                                        <option value="@backup">@backup</option>
+                                    }
+                                </select>
+                            </div>
+                            
+                            <div class="form-group mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="RestoreDatabase" name="RestoreDatabase" checked>
+                                    <label class="form-check-label" for="RestoreDatabase">
+                                        Restore Database
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="RestoreUploads" name="RestoreUploads" checked>
+                                    <label class="form-check-label" for="RestoreUploads">
+                                        Restore Uploads
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="RestoreConfig" name="RestoreConfig" checked>
+                                    <label class="form-check-label" for="RestoreConfig">
+                                        Restore Configuration
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-undo me-2"></i> Restore System
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            No backups available for restore. Please create a backup first.
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="mb-0">Upload Backup</h4>
+                </div>
+                <div class="card-body">
+                    <p>If you have a backup file from another server, you can upload it here:</p>
+                    
+                    <form method="post" enctype="multipart/form-data" asp-action="UploadBackup">
+                        <div class="form-group mb-3">
+                            <label for="backupFile">Backup File (ZIP):</label>
+                            <input type="file" class="form-control" id="backupFile" name="backupFile" accept=".zip" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-2"></i> Upload Backup
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

@@ -1,0 +1,23 @@
+{
+  "printers": [
+    {
+      "id": "ENTRY1",
+      "name": "Entry Gate Printer 1",
+      "port": "COM3",
+      "isActive": true,
+      "connectionType": "Serial"
+    },
+    {
+      "id": "EXIT1",
+      "name": "Exit Gate Printer 1",
+      "ipAddress": "192.168.1.100",
+      "tcpPort": 9100,
+      "isActive": true,
+      "connectionType": "Network"
+    }
+  ],
+  "websocket": {
+    "url": "ws://localhost:8080",
+    "reconnectInterval": 5000
+  }
+} 

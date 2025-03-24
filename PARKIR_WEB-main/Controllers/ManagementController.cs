@@ -13,6 +13,10 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 using System.Text;
 using ParkIRC.ViewModels;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
+using ParkIRC.Services;
 
 namespace ParkIRC.Controllers
 {
@@ -23,17 +27,27 @@ namespace ParkIRC.Controllers
         private readonly ILogger<ManagementController> _logger;
         private readonly UserManager<Operator> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly PrintService _printService;
+        private readonly string _backupDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "backups");
 
         public ManagementController(
             ApplicationDbContext context, 
             ILogger<ManagementController> logger, 
             UserManager<Operator> userManager,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager,
+            PrintService printService)
         {
             _context = context;
             _logger = logger;
             _userManager = userManager;
             _roleManager = roleManager;
+            _printService = printService;
+            
+            // Pastikan direktori backup ada
+            if (!Directory.Exists(_backupDir))
+            {
+                Directory.CreateDirectory(_backupDir);
+            }
         }
 
         // Parking Slots Management
@@ -946,6 +960,760 @@ namespace ParkIRC.Controllers
         private bool CameraSettingExists(int id)
         {
             return _context.CameraSettings.Any(e => e.Id == id);
+        }
+
+        [HttpGet]
+        public IActionResult Index()
+        {
+            return View();
+        }
+        
+        [HttpGet("Backup")]
+        public IActionResult Backup()
+        {
+            var model = new BackupViewModel
+            {
+                BackupOptions = new List<string> { "Database", "Uploads", "Configuration", "Complete" },
+                AvailableBackups = GetAvailableBackups()
+            };
+            
+            return View(model);
+        }
+        
+        [HttpPost("Backup")]
+        public async Task<IActionResult> CreateBackup(BackupViewModel model)
+        {
+            try
+            {
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string backupFileName = $"backup_{timestamp}.zip";
+                string backupPath = Path.Combine(_backupDir, backupFileName);
+                
+                // Simpan file log
+                string logPath = Path.Combine(_backupDir, $"backup_log_{timestamp}.txt");
+                using (StreamWriter writer = new StreamWriter(logPath))
+                {
+                    writer.WriteLine($"Backup started at {DateTime.Now}");
+                    
+                    // Jika "Complete" atau "Database" dipilih
+                    if (model.SelectedOptions.Contains("Complete") || model.SelectedOptions.Contains("Database"))
+                    {
+                        writer.WriteLine("Backing up database...");
+                        
+                        string tempDbPath = Path.Combine(Path.GetTempPath(), $"parkir_db_{timestamp}.dump");
+                        
+                        // Backup database menggunakan pg_dump
+                        var processInfo = new ProcessStartInfo
+                        {
+                            FileName = "pg_dump",
+                            Arguments = $"-Fc parkir_db > {tempDbPath}",
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+                        
+                        using (var process = Process.Start(processInfo))
+                        {
+                            process.WaitForExit();
+                            string output = await process.StandardOutput.ReadToEndAsync();
+                            string error = await process.StandardError.ReadToEndAsync();
+                            
+                            if (!string.IsNullOrEmpty(error))
+                            {
+                                writer.WriteLine($"Database backup error: {error}");
+                                _logger.LogError($"Database backup error: {error}");
+                                TempData["Error"] = "Error backing up database";
+                                return RedirectToAction(nameof(Backup));
+                            }
+                            
+                            writer.WriteLine("Database backup completed");
+                        }
+                    }
+                    
+                    // Membuat ZIP file untuk backup
+                    using (var zipFile = ZipFile.Open(backupPath, ZipArchiveMode.Create))
+                    {
+                        if (model.SelectedOptions.Contains("Complete") || model.SelectedOptions.Contains("Database"))
+                        {
+                            string tempDbPath = Path.Combine(Path.GetTempPath(), $"parkir_db_{timestamp}.dump");
+                            if (System.IO.File.Exists(tempDbPath))
+                            {
+                                zipFile.CreateEntryFromFile(tempDbPath, "database.dump");
+                                writer.WriteLine($"Added database dump to backup");
+                                System.IO.File.Delete(tempDbPath); // Hapus file temporary
+                            }
+                        }
+                        
+                        if (model.SelectedOptions.Contains("Complete") || model.SelectedOptions.Contains("Uploads"))
+                        {
+                            string uploadsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "uploads");
+                            if (Directory.Exists(uploadsDir))
+                            {
+                                foreach (var file in Directory.GetFiles(uploadsDir, "*", SearchOption.AllDirectories))
+                                {
+                                    string relativePath = file.Substring(uploadsDir.Length + 1);
+                                    zipFile.CreateEntryFromFile(file, Path.Combine("uploads", relativePath));
+                                }
+                                writer.WriteLine($"Added uploads to backup");
+                            }
+                        }
+                        
+                        if (model.SelectedOptions.Contains("Complete") || model.SelectedOptions.Contains("Configuration"))
+                        {
+                            string configFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+                            if (System.IO.File.Exists(configFile))
+                            {
+                                zipFile.CreateEntryFromFile(configFile, "appsettings.json");
+                                writer.WriteLine($"Added configuration to backup");
+                            }
+                        }
+                    }
+                    
+                    writer.WriteLine($"Backup completed at {DateTime.Now}");
+                }
+                
+                TempData["Success"] = $"Backup created successfully: {backupFileName}";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating backup");
+                TempData["Error"] = $"Error creating backup: {ex.Message}";
+            }
+            
+            return RedirectToAction(nameof(Backup));
+        }
+        
+        [HttpGet("Restore")]
+        public IActionResult Restore()
+        {
+            var model = new RestoreViewModel
+            {
+                AvailableBackups = GetAvailableBackups()
+            };
+            
+            return View(model);
+        }
+        
+        [HttpPost("Restore")]
+        public async Task<IActionResult> PerformRestore(RestoreViewModel model)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(model.SelectedBackup))
+                {
+                    TempData["Error"] = "No backup selected";
+                    return RedirectToAction(nameof(Restore));
+                }
+                
+                string backupPath = Path.Combine(_backupDir, model.SelectedBackup);
+                if (!System.IO.File.Exists(backupPath))
+                {
+                    TempData["Error"] = "Selected backup file does not exist";
+                    return RedirectToAction(nameof(Restore));
+                }
+                
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                string tempDir = Path.Combine(Path.GetTempPath(), $"parkirc_restore_{timestamp}");
+                Directory.CreateDirectory(tempDir);
+                
+                // Ekstrak backup
+                ZipFile.ExtractToDirectory(backupPath, tempDir);
+                
+                // Restore database jika ada
+                string dbDumpPath = Path.Combine(tempDir, "database.dump");
+                if (System.IO.File.Exists(dbDumpPath) && model.RestoreDatabase)
+                {
+                    // Restore database menggunakan pg_restore
+                    var processInfo = new ProcessStartInfo
+                    {
+                        FileName = "pg_restore",
+                        Arguments = $"-d parkir_db {dbDumpPath}",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    
+                    using (var process = Process.Start(processInfo))
+                    {
+                        process.WaitForExit();
+                        string output = await process.StandardOutput.ReadToEndAsync();
+                        string error = await process.StandardError.ReadToEndAsync();
+                        
+                        if (!string.IsNullOrEmpty(error) && !error.Contains("already exists"))
+                        {
+                            _logger.LogError($"Database restore error: {error}");
+                            TempData["Error"] = "Error restoring database";
+                            return RedirectToAction(nameof(Restore));
+                        }
+                    }
+                }
+                
+                // Restore uploads jika ada
+                string uploadsBackupDir = Path.Combine(tempDir, "uploads");
+                if (Directory.Exists(uploadsBackupDir) && model.RestoreUploads)
+                {
+                    string targetUploadsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "uploads");
+                    if (!Directory.Exists(targetUploadsDir))
+                    {
+                        Directory.CreateDirectory(targetUploadsDir);
+                    }
+                    
+                    foreach (var file in Directory.GetFiles(uploadsBackupDir, "*", SearchOption.AllDirectories))
+                    {
+                        string relativePath = file.Substring(uploadsBackupDir.Length + 1);
+                        string targetPath = Path.Combine(targetUploadsDir, relativePath);
+                        
+                        // Pastikan direktori target ada
+                        Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                        
+                        System.IO.File.Copy(file, targetPath, true);
+                    }
+                }
+                
+                // Restore configuration jika ada
+                string configBackupPath = Path.Combine(tempDir, "appsettings.json");
+                if (System.IO.File.Exists(configBackupPath) && model.RestoreConfig)
+                {
+                    string targetConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+                    System.IO.File.Copy(configBackupPath, targetConfigPath, true);
+                }
+                
+                // Bersihkan temporary files
+                try
+                {
+                    Directory.Delete(tempDir, true);
+                }
+                catch
+                {
+                    // Ignore cleanup errors
+                }
+                
+                TempData["Success"] = "Restore completed successfully";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error restoring backup");
+                TempData["Error"] = $"Error restoring backup: {ex.Message}";
+            }
+            
+            return RedirectToAction(nameof(Restore));
+        }
+        
+        [HttpGet("Printer")]
+        public IActionResult Printer()
+        {
+            var printers = GetAvailablePrinters();
+            var model = new PrinterManagementViewModel
+            {
+                AvailablePrinters = printers,
+                CurrentPrinter = _printService.GetCurrentPrinter()
+            };
+            
+            return View(model);
+        }
+        
+        [HttpPost("SetPrinter")]
+        public IActionResult SetPrinter(string printerName)
+        {
+            try
+            {
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = "lpoptions",
+                    Arguments = $"-d {printerName}",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                
+                using (var process = Process.Start(processInfo))
+                {
+                    process.WaitForExit();
+                    string error = process.StandardError.ReadToEnd();
+                    
+                    if (!string.IsNullOrEmpty(error))
+                    {
+                        _logger.LogError($"Error setting printer: {error}");
+                        TempData["Error"] = $"Error setting printer: {error}";
+                        return RedirectToAction(nameof(Printer));
+                    }
+                }
+                
+                TempData["Success"] = $"Default printer set to {printerName}";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error setting printer");
+                TempData["Error"] = $"Error setting printer: {ex.Message}";
+            }
+            
+            return RedirectToAction(nameof(Printer));
+        }
+        
+        [HttpPost("TestPrint")]
+        public IActionResult TestPrint(string printerName)
+        {
+            try
+            {
+                var testContent = "========== TEST PRINT ==========\n" +
+                                  "ParkIRC System\n" +
+                                  "Date: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "\n" +
+                                  "Printer: " + printerName + "\n" +
+                                  "================================\n\n\n\n\n";
+                
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = "bash",
+                    Arguments = $"-c \"echo '{testContent}' | lp -d {printerName}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                
+                using (var process = Process.Start(processInfo))
+                {
+                    process.WaitForExit();
+                    string output = process.StandardOutput.ReadToEnd();
+                    string error = process.StandardError.ReadToEnd();
+                    
+                    if (!string.IsNullOrEmpty(error))
+                    {
+                        _logger.LogError($"Error test printing: {error}");
+                        TempData["Error"] = $"Error test printing: {error}";
+                        return RedirectToAction(nameof(Printer));
+                    }
+                }
+                
+                TempData["Success"] = "Test print sent successfully";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error test printing");
+                TempData["Error"] = $"Error test printing: {ex.Message}";
+            }
+            
+            return RedirectToAction(nameof(Printer));
+        }
+        
+        [HttpGet("System")]
+        public IActionResult SystemStatus()
+        {
+            var model = GetSystemStatus();
+            return View(model);
+        }
+        
+        [HttpGet("DownloadBackup/{filename}")]
+        public IActionResult DownloadBackup(string filename)
+        {
+            try
+            {
+                var backupPath = Path.Combine(_backupDir, filename);
+                if (!System.IO.File.Exists(backupPath))
+                {
+                    TempData["Error"] = "Backup file not found";
+                    return RedirectToAction(nameof(Backup));
+                }
+                
+                var memoryStream = new MemoryStream();
+                using (var fileStream = new FileStream(backupPath, FileMode.Open))
+                {
+                    fileStream.CopyTo(memoryStream);
+                }
+                memoryStream.Position = 0;
+                
+                return File(memoryStream, "application/zip", filename);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error downloading backup");
+                TempData["Error"] = $"Error downloading backup: {ex.Message}";
+                return RedirectToAction(nameof(Backup));
+            }
+        }
+        
+        [HttpPost("DeleteBackup/{filename}")]
+        public IActionResult DeleteBackup(string filename)
+        {
+            try
+            {
+                var backupPath = Path.Combine(_backupDir, filename);
+                if (!System.IO.File.Exists(backupPath))
+                {
+                    TempData["Error"] = "Backup file not found";
+                    return RedirectToAction(nameof(Backup));
+                }
+                
+                System.IO.File.Delete(backupPath);
+                TempData["Success"] = $"Backup file {filename} deleted";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting backup");
+                TempData["Error"] = $"Error deleting backup: {ex.Message}";
+            }
+            
+            return RedirectToAction(nameof(Backup));
+        }
+        
+        private List<string> GetAvailableBackups()
+        {
+            return Directory.GetFiles(_backupDir, "backup_*.zip")
+                .Select(Path.GetFileName)
+                .OrderByDescending(x => x)
+                .ToList();
+        }
+        
+        private List<string> GetAvailablePrinters()
+        {
+            try
+            {
+                var printers = new List<string>();
+                
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = "lpstat",
+                    Arguments = "-p",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                
+                using (var process = Process.Start(processInfo))
+                {
+                    string output = process.StandardOutput.ReadToEnd();
+                    var lines = output.Split('\n');
+                    
+                    foreach (var line in lines)
+                    {
+                        if (line.StartsWith("printer "))
+                        {
+                            var parts = line.Split(' ');
+                            if (parts.Length > 1)
+                            {
+                                printers.Add(parts[1]);
+                            }
+                        }
+                    }
+                }
+                
+                return printers;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting available printers");
+                return new List<string>();
+            }
+        }
+        
+        private SystemStatusViewModel GetSystemStatus()
+        {
+            var model = new SystemStatusViewModel();
+            
+            try
+            {
+                // Cek database
+                model.DatabaseStatus = _context.Database.CanConnect();
+                
+                // Cek PostgreSQL service
+                var pgProcess = new ProcessStartInfo
+                {
+                    FileName = "systemctl",
+                    Arguments = "is-active postgresql",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                
+                using (var process = Process.Start(pgProcess))
+                {
+                    string output = process.StandardOutput.ReadToEnd().Trim();
+                    model.PostgresServiceStatus = output == "active";
+                }
+                
+                // Cek CUPS service
+                var cupsProcess = new ProcessStartInfo
+                {
+                    FileName = "systemctl",
+                    Arguments = "is-active cups",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                
+                using (var process = Process.Start(cupsProcess))
+                {
+                    string output = process.StandardOutput.ReadToEnd().Trim();
+                    model.CupsServiceStatus = output == "active";
+                }
+                
+                // Dapatkan disk usage
+                var diskProcess = new ProcessStartInfo
+                {
+                    FileName = "df",
+                    Arguments = "-h .",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                
+                using (var process = Process.Start(diskProcess))
+                {
+                    string output = process.StandardOutput.ReadToEnd();
+                    var lines = output.Split('\n');
+                    if (lines.Length > 1)
+                    {
+                        var parts = lines[1].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length > 4)
+                        {
+                            model.DiskTotal = parts[1];
+                            model.DiskUsed = parts[2];
+                            model.DiskFree = parts[3];
+                            model.DiskUsagePercent = parts[4];
+                        }
+                    }
+                }
+                
+                // Dapatkan memory usage
+                var memProcess = new ProcessStartInfo
+                {
+                    FileName = "free",
+                    Arguments = "-h",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                
+                using (var process = Process.Start(memProcess))
+                {
+                    string output = process.StandardOutput.ReadToEnd();
+                    var lines = output.Split('\n');
+                    if (lines.Length > 1)
+                    {
+                        var parts = lines[1].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length > 6)
+                        {
+                            model.MemoryTotal = parts[1];
+                            model.MemoryUsed = parts[2];
+                            model.MemoryFree = parts[3];
+                        }
+                    }
+                }
+                
+                // Dapatkan uptime
+                var uptimeProcess = new ProcessStartInfo
+                {
+                    FileName = "uptime",
+                    Arguments = "-p",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                
+                using (var process = Process.Start(uptimeProcess))
+                {
+                    string output = process.StandardOutput.ReadToEnd().Trim();
+                    model.SystemUptime = output;
+                }
+                
+                // Dapatkan load average
+                var loadavgProcess = new ProcessStartInfo
+                {
+                    FileName = "cat",
+                    Arguments = "/proc/loadavg",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                
+                using (var process = Process.Start(loadavgProcess))
+                {
+                    string output = process.StandardOutput.ReadToEnd().Trim();
+                    var parts = output.Split(' ');
+                    if (parts.Length > 2)
+                    {
+                        model.LoadAverage1 = parts[0];
+                        model.LoadAverage5 = parts[1];
+                        model.LoadAverage15 = parts[2];
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting system status");
+                model.ErrorMessage = ex.Message;
+            }
+            
+            return model;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> VehicleHistory(
+            string status = null,
+            DateTime? startDate = null, 
+            DateTime? endDate = null,
+            string vehicleType = null,
+            string plateNumber = null,
+            int page = 1)
+        {
+            var query = _context.ParkingTransactions
+                .Include(t => t.Vehicle)
+                .AsQueryable();
+
+            // Filter by status (In/Out)
+            if (!string.IsNullOrEmpty(status))
+            {
+                if (status.ToLower() == "in")
+                {
+                    query = query.Where(t => t.ExitTime == null);
+                }
+                else if (status.ToLower() == "out")
+                {
+                    query = query.Where(t => t.ExitTime != null);
+                }
+            }
+
+            // Filter by date range
+            if (startDate.HasValue)
+            {
+                query = query.Where(t => t.EntryTime >= startDate.Value);
+            }
+            if (endDate.HasValue)
+            {
+                query = query.Where(t => t.EntryTime <= endDate.Value);
+            }
+
+            // Filter by vehicle type
+            if (!string.IsNullOrEmpty(vehicleType))
+            {
+                query = query.Where(t => t.Vehicle.VehicleType == vehicleType);
+            }
+
+            // Filter by plate number
+            if (!string.IsNullOrEmpty(plateNumber))
+            {
+                query = query.Where(t => t.Vehicle.VehicleNumber.Contains(plateNumber));
+            }
+
+            // Order by latest first
+            query = query.OrderByDescending(t => t.EntryTime);
+
+            // Pagination
+            int pageSize = 20;
+            var transactions = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(t => new VehicleHistoryViewModel
+                {
+                    Id = t.Id,
+                    TicketNumber = t.TicketNumber,
+                    VehicleNumber = t.Vehicle.VehicleNumber,
+                    VehicleType = t.Vehicle.VehicleType,
+                    EntryTime = t.EntryTime,
+                    ExitTime = t.ExitTime,
+                    Duration = t.ExitTime.HasValue ? 
+                        t.ExitTime.Value - t.EntryTime : 
+                        TimeSpan.Zero,
+                    Status = t.ExitTime.HasValue ? "Keluar" : "Masuk",
+                    TotalAmount = t.TotalAmount
+                })
+                .ToListAsync();
+
+            var model = new VehicleHistoryPageViewModel
+            {
+                Transactions = transactions,
+                CurrentPage = page,
+                TotalPages = (int)Math.Ceiling(await query.CountAsync() / (double)pageSize),
+                Status = status,
+                StartDate = startDate,
+                EndDate = endDate,
+                VehicleType = vehicleType,
+                PlateNumber = plateNumber
+            };
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportVehicleHistory(
+            string status = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            string vehicleType = null,
+            string plateNumber = null,
+            string format = "excel")
+        {
+            // Similar query building as above
+            var query = _context.ParkingTransactions
+                .Include(t => t.Vehicle)
+                .AsQueryable();
+            
+            // Apply filters...
+
+            var data = await query
+                .Select(t => new
+                {
+                    t.TicketNumber,
+                    t.Vehicle.VehicleNumber,
+                    t.Vehicle.VehicleType,
+                    EntryTime = t.EntryTime.ToString("dd/MM/yyyy HH:mm:ss"),
+                    ExitTime = t.ExitTime.HasValue ? 
+                        t.ExitTime.Value.ToString("dd/MM/yyyy HH:mm:ss") : "-",
+                    Duration = t.ExitTime.HasValue ?
+                        $"{(t.ExitTime.Value - t.EntryTime).TotalHours:F1} jam" : "-",
+                    Status = t.ExitTime.HasValue ? "Keluar" : "Masuk",
+                    Amount = t.TotalAmount.ToString("C")
+                })
+                .ToListAsync();
+
+            if (format.ToLower() == "excel")
+            {
+                // Return Excel file
+                return File(GenerateExcel(data), 
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    $"vehicle-history-{DateTime.Now:yyyyMMdd}.xlsx");
+            }
+            else
+            {
+                // Return PDF file
+                return File(GeneratePdf(data),
+                    "application/pdf",
+                    $"vehicle-history-{DateTime.Now:yyyyMMdd}.pdf");
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> UpdateParkingRates(ParkingRateViewModel model)
+        {
+            try
+            {
+                var rates = await _context.ParkingRates.FirstOrDefaultAsync();
+                if (rates == null)
+                {
+                    rates = new ParkingRates();
+                    _context.ParkingRates.Add(rates);
+                }
+
+                rates.MotorcycleRate = model.MotorcycleRate;
+                rates.CarRate = model.CarRate;
+                rates.AdditionalHourRate = model.AdditionalHourRate;
+                rates.MaximumDailyRate = model.MaximumDailyRate;
+                rates.LastUpdated = DateTime.Now;
+                rates.UpdatedBy = User.Identity.Name;
+
+                await _context.SaveChangesAsync();
+                TempData["Message"] = "Tarif parkir berhasil diupdate";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating parking rates");
+                return View(model);
+            }
         }
     }
 } 

@@ -1,0 +1,243 @@
+@model ParkIRC.Models.ViewModels.SystemStatusViewModel
+@{
+    ViewData["Title"] = "System Status";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="@Url.Action("Index", "Management")" class="btn btn-secondary mb-3">
+                <i class="fas fa-arrow-left me-2"></i> Back to Management
+            </a>
+            
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">System Status</h4>
+                        <a href="@Url.Action("SystemStatus", "Management")" class="btn btn-sm btn-light">
+                            <i class="fas fa-sync-alt me-1"></i> Refresh
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Service Status</h5>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th>Database Connection</th>
+                                    <td>
+                                        @if (Model.DatabaseStatus)
+                                        {
+                                            <span class="badge bg-success">Connected</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Disconnected</span>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>PostgreSQL Service</th>
+                                    <td>
+                                        @if (Model.PostgresServiceStatus)
+                                        {
+                                            <span class="badge bg-success">Running</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Stopped</span>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>CUPS Service</th>
+                                    <td>
+                                        @if (Model.CupsServiceStatus)
+                                        {
+                                            <span class="badge bg-success">Running</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Stopped</span>
+                                        }
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <h5 class="mt-4">Load Average</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card bg-light mb-3">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">1 min</h6>
+                                            <p class="card-text fs-4">@Model.LoadAverage1</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-light mb-3">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">5 min</h6>
+                                            <p class="card-text fs-4">@Model.LoadAverage5</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-light mb-3">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">15 min</h6>
+                                            <p class="card-text fs-4">@Model.LoadAverage15</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>System Information</h5>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th>System Uptime</th>
+                                    <td>@Model.SystemUptime</td>
+                                </tr>
+                                <tr>
+                                    <th>Memory</th>
+                                    <td>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total: @Model.MemoryTotal</span>
+                                            <span>Used: @Model.MemoryUsed</span>
+                                            <span>Free: @Model.MemoryFree</span>
+                                        </div>
+                                        <div class="progress mt-2">
+                                            @{
+                                                var memUsedPercent = 0;
+                                                if (!string.IsNullOrEmpty(Model.MemoryTotal) && !string.IsNullOrEmpty(Model.MemoryUsed))
+                                                {
+                                                    var total = float.TryParse(Model.MemoryTotal.Replace("G", ""), out var t) ? t : 0;
+                                                    var used = float.TryParse(Model.MemoryUsed.Replace("G", ""), out var u) ? u : 0;
+                                                    if (total > 0)
+                                                    {
+                                                        memUsedPercent = (int)(used / total * 100);
+                                                    }
+                                                }
+                                            }
+                                            <div class="progress-bar @(memUsedPercent > 80 ? "bg-danger" : memUsedPercent > 60 ? "bg-warning" : "bg-success")" 
+                                                 role="progressbar" style="width: @memUsedPercent%;">
+                                                @memUsedPercent%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Disk Space</th>
+                                    <td>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total: @Model.DiskTotal</span>
+                                            <span>Used: @Model.DiskUsed</span>
+                                            <span>Free: @Model.DiskFree</span>
+                                        </div>
+                                        <div class="progress mt-2">
+                                            @{
+                                                var diskUsedPercent = 0;
+                                                if (!string.IsNullOrEmpty(Model.DiskUsagePercent))
+                                                {
+                                                    int.TryParse(Model.DiskUsagePercent.Replace("%", ""), out diskUsedPercent);
+                                                }
+                                            }
+                                            <div class="progress-bar @(diskUsedPercent > 80 ? "bg-danger" : diskUsedPercent > 60 ? "bg-warning" : "bg-success")" 
+                                                 role="progressbar" style="width: @diskUsedPercent%;">
+                                                @diskUsedPercent%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h5>Quick Actions</h5>
+                        <div class="btn-group">
+                            <a href="@Url.Action("RestartService", "Management", new { service = "parkirc" })" class="btn btn-warning">
+                                <i class="fas fa-redo-alt me-2"></i> Restart App
+                            </a>
+                            <a href="@Url.Action("RestartService", "Management", new { service = "postgresql" })" class="btn btn-warning">
+                                <i class="fas fa-database me-2"></i> Restart DB
+                            </a>
+                            <a href="@Url.Action("RestartService", "Management", new { service = "cups" })" class="btn btn-warning">
+                                <i class="fas fa-print me-2"></i> Restart CUPS
+                            </a>
+                            <a href="@Url.Action("ClearTempFiles", "Management")" class="btn btn-info">
+                                <i class="fas fa-broom me-2"></i> Clear Temp
+                            </a>
+                        </div>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger mt-4">
+                            <h5>Error</h5>
+                            <p>@Model.ErrorMessage</p>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="mb-0">System Logs</h4>
+                </div>
+                <div class="card-body">
+                    <form method="get" asp-action="SystemStatus" class="mb-3">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <select name="logType" class="form-select">
+                                    <option value="application">Application Log</option>
+                                    <option value="postgresql">PostgreSQL Log</option>
+                                    <option value="cups">CUPS Log</option>
+                                    <option value="system">System Log</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="logLines" class="form-select">
+                                    <option value="50">Last 50 lines</option>
+                                    <option value="100">Last 100 lines</option>
+                                    <option value="200">Last 200 lines</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" name="filter" class="form-control" placeholder="Filter (optional)">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">View Logs</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    @if (!string.IsNullOrEmpty(ViewBag.LogContent))
+                    {
+                        <div class="log-container bg-dark text-light p-3 rounded" style="max-height: 500px; overflow-y: auto; font-family: monospace;">
+                            <pre>@ViewBag.LogContent</pre>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            Select a log type and click "View Logs" to see the log content.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-refresh the page every 60 seconds
+        setTimeout(function() {
+            location.reload();
+        }, 60000);
+    </script>
+} 

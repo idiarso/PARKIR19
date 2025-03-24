@@ -2,6 +2,7 @@
 @using System.Security.Claims
 @inject UserManager<ParkIRC.Models.Operator> UserManager
 @inject RoleManager<IdentityRole> RoleManager
+@inject ApplicationDbContext Context
 @{
     var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
     var userRoles = new List<string>();
@@ -17,6 +18,8 @@
     
     bool IsInRole(string role) => userRoles.Contains(role);
     bool IsAdmin = IsInRole("Admin");
+
+    var siteSettings = await Context.SiteSettings.FirstOrDefaultAsync();
 }
 
 <!doctype html>
@@ -25,7 +28,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@ViewData["Title"] - ParkIRC</title>
+    <title>@ViewData["Title"] - @(siteSettings?.SiteName ?? "ParkIRC")</title>
+    
+    @if (!string.IsNullOrEmpty(siteSettings?.FaviconPath))
+    {
+        <link rel="icon" type="image/x-icon" href="@siteSettings.FaviconPath">
+    }
     
     <!-- Bootstrap CSS -->
     <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -44,6 +52,15 @@
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="~/lib/sweetalert2/sweetalert2.min.css" />
     
+    <!-- Toastr for notifications -->
+    <link rel="stylesheet" href="~/lib/toastr/toastr.min.css" />
+    
+    <style>
+        :root {
+            --theme-color: @(siteSettings?.ThemeColor ?? "#007bff");
+        }
+    </style>
+    
     @await RenderSectionAsync("Styles", required: false)
 </head>
 
@@ -56,10 +73,13 @@
     <header class="geex-header" id="mainHeader">
         <div class="geex-header__wrapper">
             <div class="geex-header__logo-wrapper">
+                @if (siteSettings?.ShowLogo == true && !string.IsNullOrEmpty(siteSettings.LogoPath))
+                {
+                    <img src="@siteSettings.LogoPath" style="height: 40px; margin-right: 10px;" />
+                }
                 <a href="@Url.Action("Dashboard","Parking")" class="geex-header__logo">
-                    <img src="~/img/logo-dark.svg" alt="ParkIRC Logo" />
+                    <span class="ms-3 fw-bold d-none d-md-inline">@(siteSettings?.SiteName ?? "ParkIRC")</span>
                 </a>
-                <span class="ms-3 fw-bold d-none d-md-inline">Sistem Manajemen Parkir</span>
             </div>
             
             <!-- Mobile menu toggle -->
@@ -184,6 +204,20 @@
                             </ul>
                         </li>
                     }
+
+                    <!-- Exit Gate Menu Item -->
+                    <li class="geex-header__menu__item">
+                        <a href="@Url.Action("Index", "ExitGate")" class="geex-header__menu__link">
+                            <i class="fas fa-sign-out-alt me-2"></i> Pintu Keluar
+                        </a>
+                    </li>
+
+                    <!-- Entry Gate Menu Item -->
+                    <li class="geex-header__menu__item">
+                        <a href="@Url.Action("Index", "EntryGate")" class="geex-header__menu__link">
+                            <i class="fas fa-door-open me-2"></i> Pintu Masuk
+                        </a>
+                    </li>
                 </ul>
             </nav>
 
@@ -296,6 +330,12 @@
 
     <!-- Menu Fix JS -->
     <script src="~/js/menu-fix.js"></script>
+
+    <!-- Toastr for notifications -->
+    <script src="~/lib/toastr/toastr.min.js"></script>
+    <script src="~/lib/signalr/signalr.min.js"></script>
+    <script src="~/js/system-status.js"></script>
+    <script src="~/js/site.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

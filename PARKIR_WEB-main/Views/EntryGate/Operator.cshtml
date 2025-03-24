@@ -1,0 +1,82 @@
+@model EntryGateViewModel
+<div class="container">
+    <div class="row">
+        <!-- Live Camera Feed -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Live Camera</h5>
+                </div>
+                <div class="card-body">
+                    <div id="camera-feed"></div>
+                    <button class="btn btn-primary mt-2" onclick="captureImage()">
+                        <i class="fas fa-camera"></i> Capture
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Entry Form -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Quick Entry</h5>
+                </div>
+                <div class="card-body">
+                    <form id="quickEntryForm">
+                        <!-- Preset Buttons untuk Jenis Kendaraan -->
+                        <div class="btn-group mb-3">
+                            <button type="button" class="btn btn-outline-primary" onclick="setVehicleType('Motor')">
+                                <i class="fas fa-motorcycle"></i> Motor
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="setVehicleType('Mobil')">
+                                <i class="fas fa-car"></i> Mobil
+                            </button>
+                        </div>
+
+                        <!-- Form Input -->
+                        <div class="form-group">
+                            <label>Plat Nomor</label>
+                            <input type="text" id="plateNumber" class="form-control" 
+                                   placeholder="Contoh: B 1234 ABC"
+                                   onkeyup="autoFormatPlate(this)">
+                        </div>
+
+                        <button type="submit" class="btn btn-success mt-3">
+                            <i class="fas fa-print"></i> Cetak Tiket
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Entries -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Entry Terakhir</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Waktu</th>
+                                    <th>Tiket</th>
+                                    <th>Plat Nomor</th>
+                                    <th>Jenis</th>
+                                    <th>Foto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentEntries">
+                                <!-- Diisi via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

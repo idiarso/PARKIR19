@@ -2,37 +2,145 @@
 
 ## Daftar Isi
 1. [Pendahuluan](#pendahuluan)
-2. [Arsitektur Sistem](#arsitektur-sistem)
-3. [Konfigurasi Database](#konfigurasi-database)
-4. [WebSocket Server](#websocket-server)
-5. [Manajemen Data Offline](#manajemen-data-offline)
-6. [Pemantauan Sistem](#pemantauan-sistem)
-7. [Troubleshooting](#troubleshooting)
+2. [Kebutuhan Sistem](#kebutuhan-sistem)
+3. [Instalasi](#instalasi)
+4. [Konfigurasi Pop!_OS](#konfigurasi-popos)
+5. [Konfigurasi Database](#konfigurasi-database)
+6. [WebSocket Server](#websocket-server)
+7. [Manajemen Data Offline](#manajemen-data-offline)
+8. [Pemantauan Sistem](#pemantauan-sistem)
+9. [Troubleshooting](#troubleshooting)
 
 ## Pendahuluan
 
 Panduan ini ditujukan untuk administrator sistem yang bertanggung jawab mengelola infrastruktur server untuk Sistem Parkir Modern. Dokumen ini akan membahas aspek teknis dari sistem, termasuk konfigurasi database, WebSocket server, dan penanganan data offline.
 
-## Arsitektur Sistem
+## Kebutuhan Sistem
 
-Sistem Parkir Modern terdiri dari beberapa komponen utama:
+- Pop!_OS 22.04 LTS atau lebih baru
+- Minimal 4GB RAM
+- 20GB ruang disk
+- Koneksi jaringan lokal
 
-1. **Aplikasi Klien**:
-   - ParkingIN (aplikasi entri kendaraan)
-   - ParkingOut (aplikasi keluar kendaraan)
-   - SimpleParkingAdmin (panel administrasi)
+## Instalasi
 
-2. **Server**:
-   - Database MySQL
-   - WebSocket server
-   - File server untuk penyimpanan gambar dan data offline
+### Package Dependencies
+```bash
+# Update sistem
+sudo apt update && sudo apt upgrade
 
-3. **Konektivitas**:
-   - Koneksi TCP/IP antara aplikasi klien dan server
-   - WebSocket untuk komunikasi realtime
-   - Mekanisme sinkronisasi untuk data offline
+# Install dependencies
+sudo apt install -y \
+    postgresql \
+    postgresql-contrib \
+    cups \
+    cups-client \
+    cups-daemon \
+    printer-driver-escpos \
+    libcups2 \
+    libcupsimage2 \
+    nginx \
+    certbot \
+    ufw
+```
 
-![Diagram Arsitektur](../Images/architecture_diagram.png)
+### Systemd Service
+Buat file service untuk aplikasi ParkIRC:
+
+```bash
+sudo nano /etc/systemd/system/parkirc.service
+```
+
+Isi dengan konfigurasi berikut:
+
+```ini
+[Unit]
+Description=ParkIRC Web Application
+After=network.target postgresql.service
+
+[Service]
+WorkingDirectory=/opt/parkirc
+ExecStart=/usr/bin/dotnet ParkIRC.dll
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+User=parkirc
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Aktifkan service:
+
+```bash
+sudo systemctl enable parkirc
+sudo systemctl start parkirc
+```
+
+## Konfigurasi Pop!_OS
+
+### Kebutuhan Sistem
+- Pop!_OS 22.04 LTS atau lebih baru
+- Minimal 4GB RAM
+- 20GB ruang disk
+- Koneksi jaringan lokal
+
+### Package Dependencies
+```bash
+# Update sistem
+sudo apt update && sudo apt upgrade
+
+# Install dependencies
+sudo apt install -y \
+    postgresql \
+    postgresql-contrib \
+    cups \
+    cups-client \
+    cups-daemon \
+    printer-driver-escpos \
+    libcups2 \
+    libcupsimage2 \
+    nginx \
+    certbot \
+    ufw
+```
+
+### Systemd Service
+Buat file service untuk aplikasi ParkIRC:
+
+```bash
+sudo nano /etc/systemd/system/parkirc.service
+```
+
+Isi dengan konfigurasi berikut:
+
+```ini
+[Unit]
+Description=ParkIRC Web Application
+After=network.target postgresql.service
+
+[Service]
+WorkingDirectory=/opt/parkirc
+ExecStart=/usr/bin/dotnet ParkIRC.dll
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+User=parkirc
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Aktifkan service:
+
+```bash
+sudo systemctl enable parkirc
+sudo systemctl start parkirc
+```
 
 ## Konfigurasi Database
 
@@ -150,36 +258,46 @@ Sistem dirancang untuk menangani operasi offline dan menyinkronkan data saat kon
 
 ## Pemantauan Sistem
 
-### Logging
+### Monitoring Terintegrasi
 
-1. **Struktur Log**:
-   - Lokasi: `logs/`
-   - Format file: `application_YYYYMMDD.log`
-   - Level log: DEBUG, INFO, WARNING, ERROR, CRITICAL
+ParkIRC menyediakan monitoring terintegrasi untuk memantau komponen sistem yang penting:
 
-2. **Contoh Format Log**:
-   ```
-   [2023-12-25 15:30:45] [INFO] [ParkingInForm] Database connection established
-   [2023-12-25 15:35:12] [WARNING] [Database] Connection attempt failed: Timeout
-   [2023-12-25 15:40:30] [INFO] [OfflineSync] Started syncing 5 offline records
-   ```
+1. **Dasbor Status Sistem**:
+   - Akses melalui: Management > System Status
+   - Menampilkan status Database, Printer, Kamera
+   - Menampilkan penggunaan sistem (disk, memori)
+   - Menampilkan log aplikasi dan sistem
 
-3. **Rotasi Log**:
-   - Rotasi harian
-   - Kompres file log lebih dari 7 hari
-   - Hapus file log lebih dari 90 hari
+2. **Status Indikator**:
+   - Tersedia di header aplikasi
+   - Hijau: Semua komponen terhubung
+   - Merah: Ada masalah koneksi
+   - Abu-abu: Status sedang dicek
 
-### Metrik Performa
+3. **Notifikasi Real-time**:
+   - Pemberitahuan saat terjadi masalah koneksi
+   - Pemberitahuan saat layanan dimulai atau dihentikan
 
-1. **Metrik yang Dimonitor**:
-   - Waktu respons database
-   - Jumlah koneksi WebSocket aktif
-   - Penggunaan memori dan CPU
-   - Jumlah transaksi offline menunggu sinkronisasi
+### Backup Otomatis
 
-2. **Dashboard Monitoring**:
-   - Tersedia di SimpleParkingAdmin
-   - Path: Administration > System Monitoring
+Sistem secara otomatis melakukan backup pada waktu yang dijadwalkan:
+
+1. **Pengaturan Jadwal**:
+   - Default: Pukul 03:00 setiap hari
+   - Konfigurasi di appsettings.json (`Backup:ScheduledTime`)
+
+2. **Komponen yang di-backup**:
+   - Database PostgreSQL
+   - Folder uploads (foto kendaraan)
+   - File konfigurasi
+
+3. **Rotasi Backup**:
+   - Menyimpan backup selama 7 hari (default)
+   - Konfigurasi di appsettings.json (`Backup:KeepDays`)
+
+4. **Lokasi Backup**:
+   - Folder `/opt/parkirc/backups`
+   - Format nama file: `backup_[YYYYMMDD_HHMMSS].zip`
 
 ## Troubleshooting
 

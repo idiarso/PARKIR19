@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using System.Text;
+using System.Diagnostics;
 
 namespace ParkIRC.Services
 {
@@ -112,6 +113,35 @@ namespace ParkIRC.Services
             {
                 _logger.LogError(ex, "Error printing on Linux");
                 return false;
+            }
+        }
+
+        public string GetCurrentPrinter()
+        {
+            try
+            {
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = "lpstat",
+                    Arguments = "-d",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                
+                using (var process = Process.Start(processInfo))
+                {
+                    string output = process.StandardOutput.ReadToEnd();
+                    if (output.Contains("system default destination:"))
+                    {
+                        return output.Split(':')[1].Trim();
+                    }
+                    return null;
+                }
+            }
+            catch
+            {
+                return null;
             }
         }
     }

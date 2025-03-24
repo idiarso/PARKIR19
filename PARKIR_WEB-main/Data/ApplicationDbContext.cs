@@ -12,15 +12,18 @@ namespace ParkIRC.Data
         {
         }
 
-        public DbSet<ParkingSpace> ParkingSpaces { get; set; }
-        public DbSet<Vehicle> Vehicles { get; set; }
-        public DbSet<ParkingTransaction> ParkingTransactions { get; set; }
-        public DbSet<Shift> Shifts { get; set; }
-        public DbSet<Operator> Operators { get; set; }
-        public DbSet<ParkingTicket> ParkingTickets { get; set; }
-        public DbSet<Journal> Journals { get; set; }
-        public DbSet<ParkingRateConfiguration> ParkingRates { get; set; }
-        public DbSet<CameraSettings> CameraSettings { get; set; }
+        public DbSet<ParkingSpace> ParkingSpaces { get; set; } = null!;
+        public DbSet<Vehicle> Vehicles { get; set; } = null!;
+        public DbSet<ParkingTransaction> ParkingTransactions { get; set; } = null!;
+        public DbSet<Shift> Shifts { get; set; } = null!;
+        public DbSet<Operator> Operators { get; set; } = null!;
+        public DbSet<ParkingTicket> ParkingTickets { get; set; } = null!;
+        public DbSet<Journal> Journals { get; set; } = null!;
+        public DbSet<ParkingRateConfiguration> ParkingRates { get; set; } = null!;
+        public DbSet<CameraSettings> CameraSettings { get; set; } = null!;
+        public DbSet<EntryGate> EntryGates { get; set; } = null!;
+        public DbSet<SiteSettings> SiteSettings { get; set; } = null!;
+        public DbSet<PrinterConfig> PrinterConfigs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -100,7 +103,6 @@ namespace ParkIRC.Data
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // Configure Journal
             builder.Entity<Journal>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -115,7 +117,6 @@ namespace ParkIRC.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // Configure ParkingRateConfiguration
             builder.Entity<ParkingRateConfiguration>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -136,6 +137,36 @@ namespace ParkIRC.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.ProfileName).IsRequired();
                 entity.Property(e => e.LightingCondition).HasDefaultValue("Normal");
+            });
+
+            builder.Entity<EntryGate>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Location).HasMaxLength(255);
+                entity.Property(e => e.IpAddress).HasMaxLength(100);
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+            });
+
+            builder.Entity<SiteSettings>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.SiteName).IsRequired();
+                entity.Property(e => e.ThemeColor).HasDefaultValue("#007bff");
+                entity.Property(e => e.ShowLogo).HasDefaultValue(true);
+                entity.Property(e => e.LastUpdated).IsRequired();
+                entity.Property(e => e.UpdatedBy).IsRequired();
+            });
+
+            builder.Entity<PrinterConfig>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired();
+                entity.Property(e => e.Port).IsRequired();
+                entity.Property(e => e.ConnectionType).HasDefaultValue("Serial");
+                entity.Property(e => e.Status).HasDefaultValue("Offline");
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+                entity.Property(e => e.LastChecked).IsRequired();
             });
         }
     }

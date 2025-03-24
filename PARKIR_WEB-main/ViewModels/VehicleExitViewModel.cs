@@ -7,7 +7,7 @@ namespace ParkIRC.ViewModels
     {
         [Required(ErrorMessage = "Nomor kendaraan wajib diisi")]
         [Display(Name = "Nomor Kendaraan")]
-        public string VehicleNumber { get; set; }
+        public string VehicleNumber { get; set; } = string.Empty;
 
         [Display(Name = "Metode Pembayaran")]
         public string PaymentMethod { get; set; } = "Cash";

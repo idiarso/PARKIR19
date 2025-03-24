@@ -1,0 +1,187 @@
+@model ParkIRC.Models.ViewModels.PrinterManagementViewModel
+@{
+    ViewData["Title"] = "Printer Management";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="@Url.Action("Index", "Management")" class="btn btn-secondary mb-3">
+                <i class="fas fa-arrow-left me-2"></i> Back to Management
+            </a>
+            
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Printer Settings</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Current Printer</h5>
+                            @if (!string.IsNullOrEmpty(Model.CurrentPrinter))
+                            {
+                                <div class="alert alert-success">
+                                    <strong>Current Printer:</strong> @Model.CurrentPrinter
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning">
+                                    No default printer is set.
+                                </div>
+                            }
+                            
+                            <form method="post" asp-action="SetDefaultPrinter">
+                                <div class="form-group mb-3">
+                                    <label for="printerName">Select Printer:</label>
+                                    <select class="form-select" id="printerName" name="printerName" required>
+                                        <option value="">-- Select Printer --</option>
+                                        @for (int i = 0; i < Model.AvailablePrinters.Count; i++)
+                                        {
+                                            var printer = Model.AvailablePrinters[i];
+                                            if (printer == Model.CurrentPrinter)
+                                            {
+                                                <option value="@printer" selected>@printer</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@printer">@printer</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i> Set as Default
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>Printer Test</h5>
+                            <p>Send a test page to verify printer functionality:</p>
+                            
+                            <form method="post" asp-action="TestPrinter">
+                                <div class="form-group mb-3">
+                                    <label for="testText">Test Text:</label>
+                                    <textarea class="form-control" id="testText" name="testText" rows="4">This is a test print from ParkIRC System.
+                                    
+Line 1: 12345678901234567890
+Line 2: ABCDEFGHIJKLMNOPQRST
+Line 3: abcdefghijklmnopqrst</textarea>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-info">
+                                    <i class="fas fa-print me-2"></i> Print Test
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="mb-0">Advanced Printer Settings</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-action="UpdatePrinterSettings">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="paperWidth">Paper Width (mm):</label>
+                                    <input type="number" class="form-control" id="paperWidth" name="paperWidth" value="80">
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="charactersPerLine">Characters Per Line:</label>
+                                    <input type="number" class="form-control" id="charactersPerLine" name="charactersPerLine" value="42">
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="autoCut" name="autoCut" checked>
+                                    <label class="form-check-label" for="autoCut">
+                                        Auto Cut
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="cashDrawerEnabled" name="cashDrawerEnabled" checked>
+                                    <label class="form-check-label" for="cashDrawerEnabled">
+                                        Enable Cash Drawer
+                                    </label>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="pulseOn">Pulse On (ms):</label>
+                                    <input type="number" class="form-control" id="pulseOn" name="pulseOn" value="120">
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="pulseOff">Pulse Off (ms):</label>
+                                    <input type="number" class="form-control" id="pulseOff" name="pulseOff" value="240">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i> Save Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="mb-0">CUPS Administration</h4>
+                </div>
+                <div class="card-body">
+                    <p>For advanced printer management, access the CUPS web interface:</p>
+                    
+                    <a href="http://localhost:631" target="_blank" class="btn btn-primary">
+                        <i class="fas fa-external-link-alt me-2"></i> Open CUPS Admin
+                    </a>
+                    
+                    <hr>
+                    
+                    <h5>Common CUPS Commands</h5>
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <pre class="mb-0">
+# List all printers
+lpstat -p
+
+# Check printer status
+lpstat -p -d
+
+# Cancel all jobs
+cancel -a
+
+# Restart CUPS
+sudo systemctl restart cups
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

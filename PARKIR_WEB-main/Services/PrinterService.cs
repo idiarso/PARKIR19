@@ -5,6 +5,12 @@ using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using ParkIRC.Models;
 using ParkIRC.Extensions;
+using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using ParkIRC.Data;
 
 namespace ParkIRC.Services
 {
@@ -23,15 +29,29 @@ namespace ParkIRC.Services
         private readonly string _defaultPrinter;
         private const int GENERIC_WRITE = 0x40000000;
         private const int OPEN_EXISTING = 3;
+        private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
+        private ClientWebSocket _webSocket;
+        private bool _isConnected;
+        private readonly string _printerWebSocketUrl;
+        private readonly Dictionary<string, PrinterStatus> _printerStatuses;
 
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern IntPtr CreateFile(string lpFileName, uint dwDesiredAccess,
             uint dwShareMode, IntPtr lpSecurityAttributes, uint dwCreationDisposition,
             uint dwFlagsAndAttributes, IntPtr hTemplateFile);
 
-        public PrinterService(ILogger<PrinterService> logger)
+        public PrinterService(
+            ILogger<PrinterService> logger,
+            ApplicationDbContext context,
+            IConfiguration configuration)
         {
             _logger = logger;
+            _context = context;
+            _configuration = configuration;
+            _printerWebSocketUrl = _configuration["PrinterSettings:WebSocketUrl"];
+            _printerStatuses = new Dictionary<string, PrinterStatus>();
+            _webSocket = new ClientWebSocket();
             if (OperatingSystem.IsWindows())
             {
                 _defaultPrinter = GetDefaultPrinter();
@@ -40,6 +60,182 @@ namespace ParkIRC.Services
             {
                 _defaultPrinter = string.Empty;
                 _logger.LogWarning("Printing is only supported on Windows. Using mock implementation for Linux.");
+            }
+        }
+
+        public async Task InitializeAsync()
+        {
+            try
+            {
+                // Try WebSocket connection first
+                await ConnectWebSocketAsync();
+
+                // If WebSocket fails, try reading from JSON
+                if (!_isConnected)
+                {
+                    await LoadPrinterConfigFromJsonAsync();
+                }
+
+                // If both fail, read from database
+                if (!_printerStatuses.Any())
+                {
+                    await LoadPrinterConfigFromDatabaseAsync();
+                }
+
+                // Start monitoring printer status
+                _ = StartPrinterMonitoringAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error initializing printer service");
+            }
+        }
+
+        private async Task ConnectWebSocketAsync()
+        {
+            try
+            {
+                if (_webSocket.State != WebSocketState.Open)
+                {
+                    await _webSocket.ConnectAsync(new Uri(_printerWebSocketUrl), CancellationToken.None);
+                    _isConnected = true;
+                    _logger.LogInformation("WebSocket connected to printer successfully");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to connect to printer WebSocket");
+                _isConnected = false;
+            }
+        }
+
+        private async Task LoadPrinterConfigFromJsonAsync()
+        {
+            try
+            {
+                string jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "printer_config.json");
+                if (File.Exists(jsonPath))
+                {
+                    string jsonContent = await File.ReadAllTextAsync(jsonPath);
+                    var printers = JsonSerializer.Deserialize<List<PrinterConfig>>(jsonContent);
+                    foreach (var printer in printers)
+                    {
+                        _printerStatuses[printer.Id] = new PrinterStatus
+                        {
+                            Id = printer.Id,
+                            Name = printer.Name,
+                            Port = printer.Port,
+                            IsOnline = false,
+                            LastChecked = DateTime.Now
+                        };
+                    }
+                    _logger.LogInformation("Loaded printer config from JSON");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading printer config from JSON");
+            }
+        }
+
+        private async Task LoadPrinterConfigFromDatabaseAsync()
+        {
+            try
+            {
+                var printers = await _context.PrinterConfigs
+                    .Where(p => p.IsActive)
+                    .ToListAsync();
+
+                foreach (var printer in printers)
+                {
+                    _printerStatuses[printer.Id] = new PrinterStatus
+                    {
+                        Id = printer.Id,
+                        Name = printer.Name,
+                        Port = printer.Port,
+                        IsOnline = false,
+                        LastChecked = DateTime.Now
+                    };
+                }
+                _logger.LogInformation("Loaded printer config from database");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading printer config from database");
+            }
+        }
+
+        private async Task StartPrinterMonitoringAsync()
+        {
+            while (true)
+            {
+                try
+                {
+                    if (_isConnected)
+                    {
+                        // Monitor via WebSocket
+                        await MonitorPrinterViaWebSocketAsync();
+                    }
+                    else
+                    {
+                        // Monitor via Serial/USB
+                        await MonitorPrinterViaSerialAsync();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error monitoring printer status");
+                }
+
+                await Task.Delay(5000); // Check every 5 seconds
+            }
+        }
+
+        private async Task MonitorPrinterViaWebSocketAsync()
+        {
+            var buffer = new byte[1024];
+            while (_webSocket.State == WebSocketState.Open)
+            {
+                try
+                {
+                    var result = await _webSocket.ReceiveAsync(
+                        new ArraySegment<byte>(buffer), CancellationToken.None);
+
+                    if (result.MessageType == WebSocketMessageType.Text)
+                    {
+                        string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                        var status = JsonSerializer.Deserialize<PrinterStatus>(message);
+                        UpdatePrinterStatus(status);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error receiving WebSocket message");
+                    _isConnected = false;
+                    break;
+                }
+            }
+        }
+
+        private async Task MonitorPrinterViaSerialAsync()
+        {
+            foreach (var printer in _printerStatuses.Values)
+            {
+                try
+                {
+                    using (var serialPort = new System.IO.Ports.SerialPort(printer.Port))
+                    {
+                        serialPort.Open();
+                        printer.IsOnline = true;
+                        printer.LastChecked = DateTime.Now;
+                        serialPort.Close();
+                    }
+                }
+                catch
+                {
+                    printer.IsOnline = false;
+                    printer.LastChecked = DateTime.Now;
+                }
             }
         }
 
@@ -249,5 +445,89 @@ namespace ParkIRC.Services
                 return new List<string>();
             }
         }
+
+        public async Task<bool> PrintTicket(string printerId, TicketData ticketData)
+        {
+            try
+            {
+                if (_isConnected)
+                {
+                    // Send via WebSocket
+                    var message = JsonSerializer.Serialize(new
+                    {
+                        type = "print_ticket",
+                        printerId,
+                        data = ticketData
+                    });
+                    await _webSocket.SendAsync(
+                        new ArraySegment<byte>(Encoding.UTF8.GetBytes(message)),
+                        WebSocketMessageType.Text,
+                        true,
+                        CancellationToken.None);
+                }
+                else
+                {
+                    // Print via Serial/USB
+                    if (_printerStatuses.TryGetValue(printerId, out var printer) && printer.IsOnline)
+                    {
+                        using (var serialPort = new System.IO.Ports.SerialPort(printer.Port))
+                        {
+                            serialPort.Open();
+                            string printData = FormatTicketData(ticketData);
+                            await serialPort.WriteAsync(printData);
+                            serialPort.Close();
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception($"Printer {printerId} is offline");
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error printing ticket to printer {printerId}");
+                return false;
+            }
+        }
+
+        private void UpdatePrinterStatus(PrinterStatus status)
+        {
+            if (_printerStatuses.ContainsKey(status.Id))
+            {
+                _printerStatuses[status.Id] = status;
+            }
+        }
+
+        public Dictionary<string, PrinterStatus> GetAllPrinterStatus()
+        {
+            return _printerStatuses;
+        }
+    }
+
+    public class PrinterStatus
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Port { get; set; }
+        public bool IsOnline { get; set; }
+        public DateTime LastChecked { get; set; }
+    }
+
+    public class PrinterConfig
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Port { get; set; }
+        public bool IsActive { get; set; }
+    }
+
+    public class TicketData
+    {
+        public string TicketNumber { get; set; }
+        public string VehicleNumber { get; set; }
+        public string EntryTime { get; set; }
+        public string Barcode { get; set; }
     }
 } 

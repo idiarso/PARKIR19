@@ -14,13 +14,13 @@ namespace ParkIRC.ViewModels
 
     public class HistoryTransactionViewModel
     {
-        public string TransactionNumber { get; set; }
-        public string VehicleNumber { get; set; }
-        public string VehicleType { get; set; }
+        public string TransactionNumber { get; set; } = string.Empty;
+        public string VehicleNumber { get; set; } = string.Empty;
+        public string VehicleType { get; set; } = string.Empty;
         public DateTime EntryTime { get; set; }
         public DateTime? ExitTime { get; set; }
         public TimeSpan Duration { get; set; }
         public decimal Amount { get; set; }
-        public string PaymentMethod { get; set; }
+        public string PaymentMethod { get; set; } = string.Empty;
     }
 }

@@ -6,13 +6,15 @@ namespace ParkIRC.Models
 {
     public class ParkingTicket
     {
-        public int Id { get; set; }
+        public string Id { get; set; } = string.Empty;
         
         [Required]
         public string TicketNumber { get; set; } = string.Empty;
         
         [Required]
         public string BarcodeData { get; set; } = string.Empty;
+        
+        public string QRCodeImage { get; set; } = string.Empty;
         
         public string? BarcodeImagePath { get; set; }
         
@@ -49,5 +51,11 @@ namespace ParkIRC.Models
         public virtual Shift Shift { get; set; } = null!;
         
         public string Status { get; set; } = "Active";
+        
+        public DateTime IssuedAt { get; set; } = DateTime.UtcNow;
+        
+        public bool IsValid { get; set; } = true;
+        
+        public DateTime? UsedAt { get; set; }
     }
 } 

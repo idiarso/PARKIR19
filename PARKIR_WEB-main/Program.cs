@@ -104,6 +104,16 @@ try
     // Add background service untuk cek koneksi
     builder.Services.AddHostedService<ConnectionMonitorService>();
 
+    // Add Connection Status Service
+    builder.Services.AddScoped<ConnectionStatusService>();
+    builder.Services.AddHostedService<ConnectionStatusService>();
+
+    // Add Print Service
+    builder.Services.AddScoped<PrintService>();
+
+    // Add Scheduled Backup Service
+    builder.Services.AddHostedService<ScheduledBackupService>();
+
     var app = builder.Build();
 
     // Apply pending migrations automatically

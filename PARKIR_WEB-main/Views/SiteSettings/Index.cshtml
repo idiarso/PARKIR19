@@ -1,0 +1,86 @@
+@model SiteSettings
+@{
+    ViewData["Title"] = "Pengaturan Site";
+}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Pengaturan Site</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="@Url.Action("Update")" enctype="multipart/form-data">
+                        @if (TempData["Message"] != null)
+                        {
+                            <div class="alert alert-success">
+                                @TempData["Message"]
+                            </div>
+                        }
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Nama Aplikasi</label>
+                                    <input type="text" class="form-control" name="SiteName" 
+                                           value="@Model.SiteName" required>
+                                </div>
+
+                                <div class="form-group mt-3">
+                                    <label>Logo</label>
+                                    @if (!string.IsNullOrEmpty(Model.LogoPath))
+                                    {
+                                        <div class="mb-2">
+                                            <img src="@Model.LogoPath" style="max-height: 50px" />
+                                        </div>
+                                    }
+                                    <input type="file" class="form-control" name="logo" 
+                                           accept="image/png,image/jpeg">
+                                </div>
+
+                                <div class="form-group mt-3">
+                                    <label>Favicon</label>
+                                    @if (!string.IsNullOrEmpty(Model.FaviconPath))
+                                    {
+                                        <div class="mb-2">
+                                            <img src="@Model.FaviconPath" style="max-height: 32px" />
+                                        </div>
+                                    }
+                                    <input type="file" class="form-control" name="favicon" 
+                                           accept="image/x-icon,image/png">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Teks Footer</label>
+                                    <input type="text" class="form-control" name="FooterText" 
+                                           value="@Model.FooterText">
+                                </div>
+
+                                <div class="form-group mt-3">
+                                    <label>Warna Tema</label>
+                                    <input type="color" class="form-control" name="ThemeColor" 
+                                           value="@Model.ThemeColor">
+                                </div>
+
+                                <div class="form-check mt-3">
+                                    <input type="checkbox" class="form-check-input" name="ShowLogo" 
+                                           value="true" @(Model.ShowLogo ? "checked" : "")>
+                                    <label class="form-check-label">Tampilkan Logo</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Simpan Pengaturan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

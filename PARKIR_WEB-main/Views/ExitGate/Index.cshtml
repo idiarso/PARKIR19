@@ -1,0 +1,420 @@
+@{
+    ViewData["Title"] = "Exit Gate";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-sign-out-alt me-2"></i> Pintu Keluar Kendaraan</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> Scan barcode tiket parkir untuk memproses kendaraan keluar
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Barcode Scanner Section (Default) -->
+                        <div class="col-md-12 mb-4" id="barcodeScannerSection">
+                            <div class="card bg-light">
+                                <div class="card-body text-center py-5">
+                                    <div class="scanner-animation mb-3">
+                                        <i class="fas fa-barcode fa-5x mb-3 text-primary"></i>
+                                        <div class="scanner-line"></div>
+                                    </div>
+                                    <h5>Arahkan Scanner ke Barcode Tiket</h5>
+                                    <p class="text-muted">Sistem akan memproses secara otomatis</p>
+                                    
+                                    <!-- Hidden form for manual entry of barcode -->
+                                    <form id="barcodeForm" class="mt-4">
+                                        <div class="input-group">
+                                            <input type="text" id="barcodeInput" class="form-control" placeholder="Scan atau masukkan barcode disini" autofocus>
+                                            <button type="submit" class="btn btn-primary">Proses</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Switch to Manual Mode Button -->
+                        <div class="col-md-12 mb-4 text-center">
+                            <button id="toggleModeBtn" class="btn btn-outline-secondary">
+                                <i class="fas fa-keyboard me-2"></i> Switch ke Input Manual
+                            </button>
+                        </div>
+                        
+                        <!-- Manual Input Section (Hidden by default) -->
+                        <div class="col-md-12 mb-4" id="manualInputSection" style="display: none;">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h5 class="mb-0">Input Manual Nomor Kendaraan</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="vehicleNumberForm">
+                                        <div class="form-group mb-3">
+                                            <label for="vehicleNumberInput">Nomor Kendaraan:</label>
+                                            <input type="text" id="vehicleNumberInput" class="form-control form-control-lg" placeholder="B 1234 XYZ">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search me-2"></i> Cari Kendaraan
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Receipt Section -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-receipt me-2"></i> Receipt</h4>
+                </div>
+                <div class="card-body">
+                    <div id="receiptEmpty" class="text-center py-5">
+                        <i class="fas fa-receipt fa-3x mb-3 text-muted"></i>
+                        <p class="lead">Belum ada transaksi</p>
+                        <p class="text-muted">Receipt akan muncul setelah scan barcode</p>
+                    </div>
+                    
+                    <div id="receiptContent" style="display: none;">
+                        <div class="text-center mb-4">
+                            <h5>ParkIRC Parking System</h5>
+                            <p class="mb-0">Receipt Parkir</p>
+                        </div>
+                        
+                        <table class="table table-sm">
+                            <tr>
+                                <td>No. Kendaraan</td>
+                                <td>: <span id="receipt_vehicleNumber"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Jenis</td>
+                                <td>: <span id="receipt_vehicleType"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Waktu Masuk</td>
+                                <td>: <span id="receipt_entryTime"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Waktu Keluar</td>
+                                <td>: <span id="receipt_exitTime"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Durasi</td>
+                                <td>: <span id="receipt_duration"></span></td>
+                            </tr>
+                            <tr class="table-primary">
+                                <td><strong>Total Biaya</strong></td>
+                                <td><strong>: Rp <span id="receipt_amount"></span></strong></td>
+                            </tr>
+                        </table>
+                        
+                        <div class="alert alert-success text-center mt-3">
+                            <i class="fas fa-check-circle me-2"></i> Gate terbuka
+                        </div>
+                        
+                        <div class="mt-4 text-center">
+                            <button id="printReceiptBtn" class="btn btn-primary">
+                                <i class="fas fa-print me-2"></i> Cetak Receipt
+                            </button>
+                            <button id="newTransactionBtn" class="btn btn-secondary ms-2">
+                                <i class="fas fa-sync me-2"></i> Transaksi Baru
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Transactions -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Transaksi Terakhir</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush" id="recentTransactions">
+                        <!-- Will be populated via JavaScript -->
+                        <li class="list-group-item text-center text-muted py-3">
+                            Tidak ada transaksi terbaru
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Set default focus to barcode input
+            $('#barcodeInput').focus();
+            
+            // Toggle between barcode and manual mode
+            $('#toggleModeBtn').click(function() {
+                const isBarcodeModeActive = $('#barcodeScannerSection').is(':visible');
+                
+                if (isBarcodeModeActive) {
+                    // Switch to manual mode
+                    $('#barcodeScannerSection').hide();
+                    $('#manualInputSection').show();
+                    $('#toggleModeBtn').html('<i class="fas fa-barcode me-2"></i> Switch ke Scan Barcode');
+                    $('#vehicleNumberInput').focus();
+                } else {
+                    // Switch to barcode mode
+                    $('#manualInputSection').hide();
+                    $('#barcodeScannerSection').show();
+                    $('#toggleModeBtn').html('<i class="fas fa-keyboard me-2"></i> Switch ke Input Manual');
+                    $('#barcodeInput').focus();
+                }
+            });
+            
+            // Handle barcode submission
+            $('#barcodeForm').submit(function(e) {
+                e.preventDefault();
+                const barcode = $('#barcodeInput').val().trim();
+                
+                if (!barcode) {
+                    showAlert('warning', 'Barcode tidak boleh kosong');
+                    return false;
+                }
+                
+                processBarcode(barcode);
+            });
+            
+            // Handle manual vehicle number search
+            $('#vehicleNumberForm').submit(function(e) {
+                e.preventDefault();
+                const vehicleNumber = $('#vehicleNumberInput').val().trim();
+                
+                if (!vehicleNumber) {
+                    showAlert('warning', 'Nomor kendaraan tidak boleh kosong');
+                    return false;
+                }
+                
+                findByVehicleNumber(vehicleNumber);
+            });
+            
+            // Handle print receipt button
+            $('#printReceiptBtn').click(function() {
+                printReceipt();
+            });
+            
+            // Handle new transaction button
+            $('#newTransactionBtn').click(function() {
+                resetForm();
+            });
+            
+            // Auto-focus barcode input when page loads
+            setTimeout(function() {
+                $('#barcodeInput').focus();
+            }, 500);
+            
+            // Function to process barcode
+            function processBarcode(barcode) {
+                showLoading('Memproses barcode...');
+                
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("ProcessBarcode", "ExitGate")',
+                    data: { barcode: barcode },
+                    success: function(response) {
+                        hideLoading();
+                        
+                        if (response.success) {
+                            displayReceipt(response);
+                            addToRecentTransactions(response);
+                            playSuccessSound();
+                        } else {
+                            showAlert('error', response.message);
+                            playErrorSound();
+                            $('#barcodeInput').val('').focus();
+                        }
+                    },
+                    error: function() {
+                        hideLoading();
+                        showAlert('error', 'Terjadi kesalahan sistem');
+                        $('#barcodeInput').val('').focus();
+                    }
+                });
+            }
+            
+            // Function to find by vehicle number
+            function findByVehicleNumber(vehicleNumber) {
+                showLoading('Mencari kendaraan...');
+                
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("FindByVehicleNumber", "ExitGate")',
+                    data: { vehicleNumber: vehicleNumber },
+                    success: function(response) {
+                        hideLoading();
+                        
+                        if (response.success) {
+                            // Fill the barcode input and switch to barcode mode
+                            $('#barcodeInput').val(response.ticketNumber);
+                            $('#toggleModeBtn').click(); // Switch to barcode mode
+                            
+                            // Show confirmation
+                            Swal.fire({
+                                title: 'Kendaraan Ditemukan',
+                                html: `
+                                    <p>Nomor Kendaraan: <strong>${response.vehicleNumber}</strong></p>
+                                    <p>Jenis: <strong>${response.vehicleType}</strong></p>
+                                    <p>Waktu Masuk: <strong>${response.entryTime}</strong></p>
+                                `,
+                                icon: 'success',
+                                showCancelButton: true,
+                                confirmButtonText: 'Proses Keluar',
+                                cancelButtonText: 'Batal'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    processBarcode(response.ticketNumber);
+                                }
+                            });
+                        } else {
+                            showAlert('error', response.message);
+                            $('#vehicleNumberInput').focus();
+                        }
+                    },
+                    error: function() {
+                        hideLoading();
+                        showAlert('error', 'Terjadi kesalahan sistem');
+                    }
+                });
+            }
+            
+            // Function to display receipt
+            function displayReceipt(data) {
+                $('#receipt_vehicleNumber').text(data.vehicleNumber);
+                $('#receipt_vehicleType').text(data.vehicleType);
+                $('#receipt_entryTime').text(data.entryTime);
+                $('#receipt_exitTime').text(data.exitTime);
+                $('#receipt_duration').text(data.duration);
+                $('#receipt_amount').text(formatCurrency(data.amount));
+                
+                $('#receiptEmpty').hide();
+                $('#receiptContent').show();
+                
+                // Clear form
+                $('#barcodeInput').val('');
+            }
+            
+            // Function to add to recent transactions
+            function addToRecentTransactions(data) {
+                const html = `
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${data.vehicleNumber}</strong> (${data.vehicleType})
+                                <div class="text-muted small">${data.exitTime}</div>
+                            </div>
+                            <div>Rp ${formatCurrency(data.amount)}</div>
+                        </div>
+                    </li>
+                `;
+                
+                $('#recentTransactions').prepend(html);
+                
+                // Remove "no transactions" message if present
+                if ($('#recentTransactions li.text-muted').length) {
+                    $('#recentTransactions li.text-muted').remove();
+                }
+                
+                // Limit to 5 recent transactions
+                if ($('#recentTransactions li').length > 5) {
+                    $('#recentTransactions li:last-child').remove();
+                }
+            }
+            
+            // Function to print receipt
+            function printReceipt() {
+                // In a real implementation, this would call the print service
+                showAlert('info', 'Mencetak receipt...');
+                
+                // Simulate printing
+                setTimeout(function() {
+                    showAlert('success', 'Receipt berhasil dicetak');
+                }, 1500);
+            }
+            
+            // Function to reset form for new transaction
+            function resetForm() {
+                $('#receiptContent').hide();
+                $('#receiptEmpty').show();
+                $('#barcodeInput').val('').focus();
+            }
+            
+            // Helper functions
+            function showAlert(type, message) {
+                Swal.fire({
+                    title: type === 'error' ? 'Error' : type === 'warning' ? 'Peringatan' : 'Informasi',
+                    text: message,
+                    icon: type,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            }
+            
+            function showLoading(message) {
+                Swal.fire({
+                    title: 'Loading',
+                    text: message,
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            }
+            
+            function hideLoading() {
+                Swal.close();
+            }
+            
+            function formatCurrency(amount) {
+                return new Intl.NumberFormat('id-ID').format(amount);
+            }
+            
+            function playSuccessSound() {
+                // Play success sound if available
+                const audio = new Audio('/sounds/success.mp3');
+                audio.play().catch(e => console.log('Error playing sound'));
+            }
+            
+            function playErrorSound() {
+                // Play error sound if available
+                const audio = new Audio('/sounds/error.mp3');
+                audio.play().catch(e => console.log('Error playing sound'));
+            }
+        });
+    </script>
+    
+    <style>
+        .scanner-animation {
+            position: relative;
+            width: 200px;
+            height: 120px;
+            margin: 0 auto;
+        }
+        
+        .scanner-line {
+            width: 100%;
+            height: 2px;
+            background-color: red;
+            position: absolute;
+            top: 0;
+            animation: scan 2s infinite;
+        }
+        
+        @keyframes scan {
+            0% { top: 0; }
+            50% { top: 120px; }
+            100% { top: 0; }
+        }
+    </style>
+} 

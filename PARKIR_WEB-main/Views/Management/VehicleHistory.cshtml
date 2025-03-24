@@ -1,0 +1,199 @@
+@model VehicleHistoryPageViewModel
+@{
+    ViewData["Title"] = "Riwayat Kendaraan";
+}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Filter Riwayat Kendaraan</h4>
+                </div>
+                <div class="card-body">
+                    <form method="get" id="filterForm">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <select name="status" class="form-control">
+                                        <option value="">Semua</option>
+                                        @if (Model.Status == "in")
+                                        {
+                                            <option value="in" selected>Masuk</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="in">Masuk</option>
+                                        }
+                                        @if (Model.Status == "out")
+                                        {
+                                            <option value="out" selected>Keluar</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="out">Keluar</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Tanggal Mulai</label>
+                                    <input type="date" name="startDate" class="form-control" 
+                                           value="@(Model.StartDate?.ToString("yyyy-MM-dd"))">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>Tanggal Akhir</label>
+                                    <input type="date" name="endDate" class="form-control"
+                                           value="@(Model.EndDate?.ToString("yyyy-MM-dd"))">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Jenis Kendaraan</label>
+                                    <select name="vehicleType" class="form-control">
+                                        <option value="">Semua</option>
+                                        @if (Model.VehicleType == "Motor")
+                                        {
+                                            <option value="Motor" selected>Motor</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="Motor">Motor</option>
+                                        }
+                                        @if (Model.VehicleType == "Mobil")
+                                        {
+                                            <option value="Mobil" selected>Mobil</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="Mobil">Mobil</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Plat Nomor</label>
+                                    <input type="text" name="plateNumber" class="form-control" 
+                                           value="@Model.PlateNumber" placeholder="Cari plat...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i> Cari
+                                </button>
+                                <button type="button" class="btn btn-success ms-2" onclick="exportData('excel')">
+                                    <i class="fas fa-file-excel me-2"></i> Export Excel
+                                </button>
+                                <button type="button" class="btn btn-danger ms-2" onclick="exportData('pdf')">
+                                    <i class="fas fa-file-pdf me-2"></i> Export PDF
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>No. Tiket</th>
+                                    <th>Plat Nomor</th>
+                                    <th>Jenis</th>
+                                    <th>Waktu Masuk</th>
+                                    <th>Waktu Keluar</th>
+                                    <th>Durasi</th>
+                                    <th>Status</th>
+                                    <th>Biaya</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Transactions)
+                                {
+                                    <tr>
+                                        <td>@item.TicketNumber</td>
+                                        <td>@item.VehicleNumber</td>
+                                        <td>@item.VehicleType</td>
+                                        <td>@item.EntryTime.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                        <td>@(item.ExitTime?.ToString("dd/MM/yyyy HH:mm:ss") ?? "-")</td>
+                                        <td>@(item.ExitTime.HasValue ? $"{item.Duration.TotalHours:F1} jam" : "-")</td>
+                                        <td>
+                                            <span class="badge bg-@(item.Status == "Masuk" ? "success" : "secondary")">
+                                                @item.Status
+                                            </span>
+                                        </td>
+                                        <td>@item.TotalAmount.ToString("C")</td>
+                                        <td>
+                                            <a href="javascript:void(0)" onclick="showDetail('@item.Id')"
+                                               class="btn btn-sm btn-info">
+                                                <i class="fas fa-info-circle"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (Model.TotalPages > 1)
+                    {
+                        <div class="d-flex justify-content-center mt-4">
+                            <nav>
+                                <ul class="pagination">
+                                    @for (int i = 1; i <= Model.TotalPages; i++)
+                                    {
+                                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                            <a class="page-link" href="javascript:void(0)" 
+                                               onclick="changePage(@i)">@i</a>
+                                        </li>
+                                    }
+                                </ul>
+                            </nav>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function changePage(page) {
+            const form = document.getElementById('filterForm');
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'page';
+            input.value = page;
+            form.appendChild(input);
+            form.submit();
+        }
+
+        function exportData(format) {
+            const form = document.getElementById('filterForm');
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'format';
+            input.value = format;
+            form.appendChild(input);
+            form.action = '@Url.Action("ExportVehicleHistory")';
+            form.submit();
+            form.removeChild(input);
+            form.action = '';
+        }
+
+        function showDetail(id) {
+            // Implementation for showing transaction detail modal
+        }
+    </script>
+} 

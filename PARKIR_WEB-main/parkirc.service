@@ -1,0 +1,16 @@
+[Unit]
+Description=ParkIRC Web Application
+After=network.target postgresql.service
+
+[Service]
+WorkingDirectory=/opt/parkirc
+ExecStart=/usr/bin/dotnet ParkIRC.dll
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+User=parkirc
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+[Install]
+WantedBy=multi-user.target 

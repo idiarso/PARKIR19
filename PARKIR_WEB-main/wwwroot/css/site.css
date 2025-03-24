@@ -175,4 +175,51 @@ html[data-nav="top"] .geex-header {
 .btn-block {
     display: block;
     width: 100%;
+}
+
+/* Add to existing site.css */
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.bg-success {
+  background-color: #28a745;
+}
+
+.bg-warning {
+  background-color: #ffc107;
+}
+
+.bg-danger {
+  background-color: #dc3545;
+}
+
+.bg-secondary {
+  background-color: #6c757d;
+}
+
+/* Barcode Scanner Styles */
+.scanner-animation {
+    position: relative;
+    width: 200px;
+    height: 120px;
+    margin: 0 auto;
+}
+
+.scanner-line {
+    width: 100%;
+    height: 2px;
+    background-color: red;
+    position: absolute;
+    top: 0;
+    animation: scan 2s infinite;
+}
+
+@keyframes scan {
+    0% { top: 0; }
+    50% { top: 120px; }
+    100% { top: 0; }
 } 

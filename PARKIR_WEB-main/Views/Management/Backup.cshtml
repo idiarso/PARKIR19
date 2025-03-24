@@ -1,0 +1,137 @@
+@model ParkIRC.Models.ViewModels.BackupViewModel
+@{
+    ViewData["Title"] = "Backup System";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="@Url.Action("Index", "Management")" class="btn btn-secondary mb-3">
+                <i class="fas fa-arrow-left me-2"></i> Back to Management
+            </a>
+            
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Create Backup</h4>
+                </div>
+                <div class="card-body">
+                    <p>Select the components you want to include in the backup.</p>
+                    
+                    <form method="post" asp-action="CreateBackup">
+                        <div class="form-group mb-4">
+                            @foreach (var option in Model.BackupOptions)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="SelectedOptions" value="@option" id="option_@option">
+                                    <label class="form-check-label" for="option_@option">
+                                        @option
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i> Create Backup
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="mb-0">Available Backups</h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.AvailableBackups.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Backup File</th>
+                                        <th>Size</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var backup in Model.AvailableBackups)
+                                    {
+                                        var fileInfo = new System.IO.FileInfo(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "backups", backup));
+                                        <tr>
+                                            <td>@backup</td>
+                                            <td>@(fileInfo.Length / 1024) KB</td>
+                                            <td>@fileInfo.CreationTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                            <td>
+                                                <a href="@Url.Action("DownloadBackup", "Management", new { filename = backup })" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-download"></i> Download
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-danger" 
+                                                        onclick="confirmDelete('@backup')">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            No backups available.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this backup file? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" asp-action="DeleteBackup">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDelete(filename) {
+            document.getElementById('deleteForm').action = '@Url.Action("DeleteBackup", "Management")/' + filename;
+            var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+    </script>
+} 
