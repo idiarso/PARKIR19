@@ -1,0 +1,125 @@
+                    ARDUINO GATE CONTROLLER WIRING DIAGRAM
+                    =====================================
+
++---------------+                    +---------------+
+|               |                    |               |
+|    ARDUINO    |                    |     RELAY     |
+|     BOARD     |                    |    MODULE     |
+|               |                    |               |
++---+-+-+-+-+-+--+                    +--+--+-+-------+
+    | | | | | |                         |  | |
+    | | | | | |                         |  | |
+    | | | | | |                         |  | |
+    | | | | | +-------------------------+  | |       +-------+
+    | | | | |   (Digital Pin 2)            | |       |       |
+    | | | | |                              | +-------+ GATE  |
+    | | | | |                              |         | MOTOR |
+    | | | | |                              +---------+       |
+    | | | | |                                        +-------+
+    | | | | |
+    | | | | |           +---------------+
+    | | | | |           |               |
+    | | | | +-----------+ IR SENSOR     |
+    | | | |   (Pin 3)   | OR LOOP       |
+    | | | |             | DETECTOR      |
+    | | | |             |               |
+    | | | |             +---------------+
+    | | | |
+    | | | |
+    | | | |             +---------------+
+    | | | |             |               |
+    | | | +-------------+ MANUAL        |
+    | | |     (Pin 4)   | BUTTON        |
+    | | |               |               |
+    | | |               +---------------+
+    | | |
+    | | |              
+    | | |               +---------------+
+    | | |               |               |
+    | | +---------------+ CAMERA        |
+    | |      (Pin 5)    | TRIGGER       |
+    | |                 | CIRCUIT       |
+    | |                 +-------+-------+
+    | |                         |
+    | |                         |       +---------------+
+    | |                         +-------+               |
+    | |                                 | CAMERA        |
+    | |                                 | REMOTE SHUTTER|
+    | |                                 +---------------+
+    | |
+    | |                +---------------+
+    | |                |               |
+    | +----------------+ PRINTER       |
+    |       (Pin 6)    | TRIGGER       |
+    |                  | CIRCUIT       |
+    |                  +-------+-------+
+    |                          |
+    |                          |       +---------------+
+    |                          +-------+               |
+    |                                  | THERMAL       |
+    |                                  | PRINTER       |
+    |                                  +---------------+
+    |
+    |
+    |                 +---------------+
+    |                 |               |
+    +-----------------+ STATUS LED    |
+         (Pin 13)     | (OPTIONAL)    |
+                      |               |
+                      +---------------+
+
+                   POWER SUPPLY CONNECTIONS
+                  +---------------------+
+                  |                     |
+                  |    POWER SUPPLY     |
+                  |                     |
+                  +--+-------+-------+--+
+                     |       |       |
+                     |       |       |
+   +------------------+       |       +------------------+
+   |   +5V to Arduino/Logic   |        +12V to Gate Motor
+   |                          |
+   v                          v
+
+NOTES:
+------
+1. Connect Arduino ground to common ground for all components
+2. IR sensor typically needs +5V, GND, and signal connected to pin 3
+3. Button connects between pin 4 and ground (internal pull-up used)
+4. Camera trigger connects to pin 5 and can be used to trigger a camera's remote shutter
+5. Printer trigger connects to pin 6 and can signal a printer to start printing
+6. Status LED connects between pin 13 and ground via current-limiting resistor (220-330 ohm)
+
+   CONNECTIONS SUMMARY
+   ------------------
+   Digital Pin 2 -> Relay control signal
+   Digital Pin 3 -> IR Sensor/Loop Detector signal (LOW when vehicle detected) 
+   Digital Pin 4 -> Button (connect to GND when pressed)
+   Digital Pin 5 -> Camera trigger output (HIGH when active)
+   Digital Pin 6 -> Printer trigger output (HIGH when active)
+   Digital Pin 13 -> Status LED (+ve with current-limiting resistor)
+   
+   VCC -> +5V power
+   GND -> Common ground
+
+CAMERA TRIGGER CIRCUIT (OPTIONAL):
+----------------------------------
+If connecting to a camera with a remote shutter input, you might need an opto-isolator
+or relay to safely interface the Arduino with the camera. A basic circuit would be:
+
+Arduino Pin 5 ----> 220Ω resistor ----> LED side of opto-isolator
+                                            |
+                                            v
+Camera shutter input <------------ Transistor side of opto-isolator
+
+PRINTER TRIGGER CIRCUIT (OPTIONAL):
+----------------------------------
+Similar to the camera circuit, if connecting directly to a printer's trigger input:
+
+Arduino Pin 6 ----> 220Ω resistor ----> LED side of opto-isolator
+                                            |
+                                            v
+Printer trigger input <------------ Transistor side of opto-isolator
+
+Note: Most implementations will use the desktop application to handle camera and printing
+functionality rather than direct hardware connections. 

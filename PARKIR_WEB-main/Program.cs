@@ -11,6 +11,10 @@ using Microsoft.Extensions.Logging;
 using NLog;
 using NLog.Web;
 using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.OpenApi.Models;
 
 // Configurar comportamiento legacy de timestamps para Npgsql
 // Esto permite usar DateTime locales con PostgreSQL
@@ -76,7 +80,7 @@ try
         .AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders();
 
-    // Configure cookie settings
+    // Configure cookie settings for MVC
     builder.Services.ConfigureApplicationCookie(options => {
         options.Cookie.HttpOnly = true;
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
@@ -84,6 +88,56 @@ try
         options.LogoutPath = "/Auth/Logout";
         options.AccessDeniedPath = "/Auth/AccessDenied";
         options.SlidingExpiration = true;
+    });
+
+    // Configure JWT Authentication
+    var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+    var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"]);
+    builder.Services.AddAuthentication(options => {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options => {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            ClockSkew = TimeSpan.Zero
+        };
+
+        // Configure event for SignalR
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/parkinghub"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+    // Add CORS for desktop client
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowDesktopClient", builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
     });
 
     // Add SignalR support
@@ -113,6 +167,43 @@ try
 
     // Add Scheduled Backup Service
     builder.Services.AddHostedService<ScheduledBackupService>();
+
+    // Add Swagger
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(c =>
+    {
+        c.SwaggerDoc("v1", new OpenApiInfo { 
+            Title = "ParkIRC API", 
+            Version = "v1",
+            Description = "API for ParkIRC Parking Management System"
+        });
+        
+        // Add JWT Authentication to Swagger
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            Type = SecuritySchemeType.ApiKey,
+            Scheme = "Bearer",
+            BearerFormat = "JWT",
+            In = ParameterLocation.Header,
+            Description = "JWT Authorization header using the Bearer scheme."
+        });
+
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
+            {
+                new OpenApiSecurityScheme
+                {
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                Array.Empty<string>()
+            }
+        });
+    });
 
     var app = builder.Build();
 
@@ -150,6 +241,9 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.UseDeveloperExceptionPage();
+        // Enable Swagger UI in development
+        app.UseSwagger();
+        app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ParkIRC API v1"));
     }
     else
     {
@@ -248,35 +342,36 @@ try
     // Configure HTTPS redirection
     app.UseHttpsRedirection();
     app.UseStaticFiles();
-
-    // Add rate limiting middleware
-    app.UseMiddleware<RateLimitingMiddleware>();
-
-    // Add response caching middleware
-    app.UseResponseCaching();
-
     app.UseRouting();
-
+    
+    // Enable CORS
+    app.UseCors("AllowDesktopClient");
+    
     app.UseAuthentication();
     app.UseAuthorization();
 
-    // Configure endpoints
-    app.MapControllerRoute(
-        name: "default",
-        pattern: "{controller=Auth}/{action=Login}/{id?}");
-
-    // Map SignalR hub
-    app.MapHub<ParkingHub>("/parkingHub");
-
-    // Add health checks
-    app.MapHealthChecks("/health");
+    // Use endpoints
+    app.UseEndpoints(endpoints =>
+    {
+        endpoints.MapControllerRoute(
+            name: "default",
+            pattern: "{controller=Home}/{action=Index}/{id?}");
+        endpoints.MapHub<ParkingHub>("/parkinghub");
+        endpoints.MapHealthChecks("/health");
+    });
 
     app.Run();
 }
 catch (Exception ex)
 {
-    logger.Error(ex, "Application stopped due to exception");
+    // NLog: catch setup errors
+    logger.Error(ex, "Stopped program because of exception");
     throw;
+}
+finally
+{
+    // Ensure to flush and stop internal timers/threads before application-exit (Avoid segmentation fault on Linux)
+    NLog.LogManager.Shutdown();
 }
 
 // Helper method to generate transaction numbers

@@ -58,8 +58,8 @@ ParkIRC adalah sistem manajemen parkir modern yang menggabungkan otomatisasi di 
 ## Persyaratan Sistem
 
 - .NET 6.0 SDK
-- PostgreSQL 13+
-- Nginx/Apache (untuk production)
+- PostgreSQL 14+
+- Apache (untuk production)
 - Modern web browser
 - Perangkat keras yang kompatibel
 

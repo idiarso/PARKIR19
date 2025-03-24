@@ -1,0 +1,257 @@
+{
+  "api_version": "1.0",
+  "description": "ParkIRC Gate API - Example JSON Requests and Responses",
+  "base_url": "http://localhost:5000/api",
+  
+  "examples": {
+    "gate_commands": [
+      {
+        "description": "Open Entry Gate",
+        "endpoint": "/gates/entry/command",
+        "method": "POST",
+        "request": {
+          "command": "OPEN_GATE",
+          "timestamp": "2023-03-24T15:45:30Z"
+        },
+        "response": {
+          "success": true,
+          "message": "Command sent successfully",
+          "command": "OPEN_GATE",
+          "gate_id": "entry",
+          "timestamp": "2023-03-24T15:45:31Z"
+        }
+      },
+      {
+        "description": "Close Exit Gate",
+        "endpoint": "/gates/exit/command",
+        "method": "POST",
+        "request": {
+          "command": "CLOSE_GATE",
+          "timestamp": "2023-03-24T15:47:20Z"
+        },
+        "response": {
+          "success": true,
+          "message": "Command sent successfully",
+          "command": "CLOSE_GATE",
+          "gate_id": "exit",
+          "timestamp": "2023-03-24T15:47:21Z"
+        }
+      },
+      {
+        "description": "Get Entry Gate Status",
+        "endpoint": "/gates/entry/command",
+        "method": "POST",
+        "request": {
+          "command": "STATUS",
+          "timestamp": "2023-03-24T15:48:10Z"
+        },
+        "response": {
+          "success": true,
+          "message": "Status request sent",
+          "command": "STATUS",
+          "gate_id": "entry",
+          "timestamp": "2023-03-24T15:48:11Z"
+        }
+      }
+    ],
+    
+    "gate_status": [
+      {
+        "description": "Get Entry Gate Status",
+        "endpoint": "/gates/entry/status",
+        "method": "GET",
+        "response": {
+          "gate_id": "entry",
+          "status": {
+            "gate": "OPEN",
+            "sensor": "VEHICLE_DETECTED"
+          },
+          "last_updated": "2023-03-24T15:48:15Z"
+        }
+      },
+      {
+        "description": "Get Exit Gate Status",
+        "endpoint": "/gates/exit/status",
+        "method": "GET",
+        "response": {
+          "gate_id": "exit",
+          "status": {
+            "gate": "CLOSED",
+            "sensor": "NO_VEHICLE"
+          },
+          "last_updated": "2023-03-24T15:48:20Z"
+        }
+      }
+    ],
+    
+    "events": [
+      {
+        "description": "Vehicle Detected at Entry Event",
+        "websocket_event": {
+          "event_type": "VEHICLE_DETECTED",
+          "gate_id": "entry",
+          "timestamp": "2023-03-24T15:50:10Z",
+          "data": {
+            "image_captured": true,
+            "image_path": "/images/vehicles/vehicle_20230324_155010.jpg"
+          }
+        }
+      },
+      {
+        "description": "Gate Opened Event",
+        "websocket_event": {
+          "event_type": "GATE_OPENED",
+          "gate_id": "entry",
+          "timestamp": "2023-03-24T15:50:15Z",
+          "data": {
+            "trigger": "AUTO",
+            "vehicle_id": 12345
+          }
+        }
+      },
+      {
+        "description": "Vehicle Left Event",
+        "websocket_event": {
+          "event_type": "VEHICLE_LEFT",
+          "gate_id": "entry",
+          "timestamp": "2023-03-24T15:50:45Z",
+          "data": {
+            "duration_seconds": 35
+          }
+        }
+      },
+      {
+        "description": "Gate Closed Event",
+        "websocket_event": {
+          "event_type": "GATE_CLOSED",
+          "gate_id": "entry",
+          "timestamp": "2023-03-24T15:50:50Z",
+          "data": {
+            "trigger": "TIMEOUT"
+          }
+        }
+      }
+    ],
+    
+    "parking_record": {
+      "description": "Parking Record Created When Vehicle Enters",
+      "endpoint": "/parking/records",
+      "method": "POST",
+      "request": {
+        "vehicle_data": {
+          "entry_timestamp": "2023-03-24T15:50:10Z",
+          "entry_gate_id": "entry",
+          "image_path": "/images/vehicles/vehicle_20230324_155010.jpg",
+          "license_plate": "B1234CD"
+        }
+      },
+      "response": {
+        "success": true,
+        "message": "Parking record created",
+        "parking_record": {
+          "id": 67890,
+          "vehicle_data": {
+            "entry_timestamp": "2023-03-24T15:50:10Z",
+            "entry_gate_id": "entry",
+            "image_path": "/images/vehicles/vehicle_20230324_155010.jpg",
+            "license_plate": "B1234CD"
+          },
+          "status": "ACTIVE",
+          "ticket_id": "T230324155010"
+        }
+      }
+    },
+    
+    "parking_payment": {
+      "description": "Process Payment for Parking",
+      "endpoint": "/parking/records/67890/payment",
+      "method": "POST",
+      "request": {
+        "payment_amount": 15000,
+        "payment_method": "CASH",
+        "payment_timestamp": "2023-03-24T16:50:10Z",
+        "operator_id": "op123"
+      },
+      "response": {
+        "success": true,
+        "message": "Payment processed",
+        "payment_data": {
+          "payment_id": "PAY789012",
+          "payment_amount": 15000,
+          "payment_method": "CASH",
+          "payment_timestamp": "2023-03-24T16:50:10Z",
+          "operator_id": "op123",
+          "receipt_number": "R230324165010",
+          "duration_hours": 1.0,
+          "exit_allowed_until": "2023-03-24T17:20:10Z"
+        }
+      }
+    },
+    
+    "parking_exit": {
+      "description": "Record Vehicle Exit",
+      "endpoint": "/parking/records/67890/exit",
+      "method": "POST",
+      "request": {
+        "exit_timestamp": "2023-03-24T16:55:20Z",
+        "exit_gate_id": "exit"
+      },
+      "response": {
+        "success": true,
+        "message": "Vehicle exit recorded",
+        "parking_record": {
+          "id": 67890,
+          "entry_data": {
+            "entry_timestamp": "2023-03-24T15:50:10Z",
+            "entry_gate_id": "entry",
+            "image_path": "/images/vehicles/vehicle_20230324_155010.jpg",
+            "license_plate": "B1234CD"
+          },
+          "exit_data": {
+            "exit_timestamp": "2023-03-24T16:55:20Z",
+            "exit_gate_id": "exit",
+            "duration_hours": 1.09,
+            "final_amount": 15000
+          },
+          "status": "COMPLETED",
+          "ticket_id": "T230324155010"
+        }
+      }
+    }
+  },
+  
+  "error_responses": [
+    {
+      "description": "Gate Not Found Error",
+      "status_code": 404,
+      "body": {
+        "success": false,
+        "error": "NOT_FOUND",
+        "message": "Gate with ID 'unknown' not found",
+        "timestamp": "2023-03-24T15:59:30Z"
+      }
+    },
+    {
+      "description": "Invalid Command Error",
+      "status_code": 400,
+      "body": {
+        "success": false,
+        "error": "INVALID_COMMAND",
+        "message": "Command 'INVALID_COMMAND' is not recognized",
+        "timestamp": "2023-03-24T15:59:40Z",
+        "valid_commands": ["OPEN_GATE", "CLOSE_GATE", "STATUS"]
+      }
+    },
+    {
+      "description": "Gate Communication Error",
+      "status_code": 500,
+      "body": {
+        "success": false,
+        "error": "COMMUNICATION_ERROR",
+        "message": "Failed to communicate with gate controller",
+        "timestamp": "2023-03-24T15:59:50Z",
+        "details": "Serial port COM3 not available"
+      }
+    }
+  ]
+} 
